@@ -22,24 +22,43 @@ class Cliente {
   });
 
   factory Cliente.fromJson(Map<String, dynamic> json) => Cliente(
-    id: json['id']?.toString(),
-    nombre: json['name'] ?? json['nombre'] ?? '',
-    ci: json['identification_card'] ?? json['ci'] ?? '',
-    telefono: json['phone'] ?? json['telefono'] ?? '',
-    email: json['email'],
-    whatsapp: json['whatsapp'],
-    direccion: json['address'] ?? json['direccion'],
-    status: json['status'],
-    source: json['source'],
+    id: json['client_id']?.toString() ?? json['id']?.toString(),
+    nombre:
+        json['client_name']?.toString() ??
+        json['name']?.toString() ??
+        json['nombre']?.toString() ??
+        '',
+    ci:
+        json['tax_id']?.toString() ??
+        json['identification_card']?.toString() ??
+        json['ci']?.toString() ??
+        '',
+    telefono:
+        json['cell_phone']?.toString() ??
+        json['phone']?.toString() ??
+        json['telefono']?.toString() ??
+        json['home_phone']?.toString() ??
+        '',
+    email: json['email']?.toString(),
+    whatsapp: json['whatsapp']?.toString(),
+    direccion: (json['address'] ?? json['direccion'])?.toString(),
+    status: json['status']?.toString(),
+    source: json['source']?.toString(),
   );
 
   Map<String, dynamic> toJson() => {
+    if (id != null) 'client_id': id,
+    if (id != null) 'id': id,
+    'client_name': nombre,
+    'tax_id': ci,
+    'cell_phone': telefono,
     'name': nombre,
     'identification_card': ci,
     'phone': telefono,
     if (email != null) 'email': email,
     if (whatsapp != null) 'whatsapp': whatsapp,
     if (direccion != null) 'address': direccion,
+    if (direccion != null) 'direccion': direccion,
     if (status != null) 'status': status,
     if (source != null) 'source': source,
   };

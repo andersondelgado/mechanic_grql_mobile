@@ -31,10 +31,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginPage(),
-      ),
+      GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
       ShellRoute(
         builder: (context, state, child) {
           return AppBottomNavBar(child: child);

@@ -16,9 +16,13 @@ class VehiculosPage extends HookConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(isAdmin ? 'Vehículos' : 'Mis Autos',
-            style: const TextStyle(
-                color: AppColors.secondary, fontWeight: FontWeight.bold)),
+        title: Text(
+          isAdmin ? 'Vehículos' : 'Mis Autos',
+          style: const TextStyle(
+            color: AppColors.secondary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -35,8 +39,11 @@ class VehiculosPage extends HookConsumerWidget {
         data: (vehiculos) {
           if (vehiculos.isEmpty) {
             return const Center(
-                child: Text('No hay vehículos registrados',
-                    style: TextStyle(color: AppColors.textSecondary)));
+              child: Text(
+                'No hay vehículos registrados',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            );
           }
           return RefreshIndicator(
             onRefresh: () =>
@@ -51,33 +58,47 @@ class VehiculosPage extends HookConsumerWidget {
                   elevation: 0,
                   margin: const EdgeInsets.only(bottom: 12),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: const BorderSide(color: Color(0xFFF1F5F9))),
+                    borderRadius: BorderRadius.circular(16),
+                    side: const BorderSide(color: Color(0xFFF1F5F9)),
+                  ),
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                      child: const Icon(Icons.directions_car,
-                          color: AppColors.primary),
+                      child: const Icon(
+                        Icons.directions_car,
+                        color: AppColors.primary,
+                      ),
                     ),
-                    title: Text('${veh.brand ?? 'Vehículo'} ${veh.model ?? ''}',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.secondary)),
+                    title: Text(
+                      '${veh.brand ?? 'Vehículo'} ${veh.model ?? ''}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.secondary,
+                      ),
+                    ),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Placa: ${veh.licensePlate}',
-                            style: const TextStyle(
-                                color: AppColors.textSecondary)),
+                        Text(
+                          'Placa: ${veh.licensePlate}',
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
                         if (veh.clientName != null)
-                          Text('Cliente: ${veh.clientName}',
-                              style: const TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 12)),
+                          Text(
+                            'Cliente: ${veh.clientName}',
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
                       ],
                     ),
-                    trailing:
-                        const Icon(Icons.chevron_right, color: Colors.grey),
+                    trailing: const Icon(
+                      Icons.chevron_right,
+                      color: Colors.grey,
+                    ),
                     onTap: () {
                       // context.push('/vehiculos/${veh.id}');
                     },
@@ -88,10 +109,14 @@ class VehiculosPage extends HookConsumerWidget {
           );
         },
         loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.primary)),
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
         error: (err, stack) => Center(
-            child: Text('Error: $err',
-                style: const TextStyle(color: AppColors.danger))),
+          child: Text(
+            'Error: $err',
+            style: const TextStyle(color: AppColors.danger),
+          ),
+        ),
       ),
     );
   }

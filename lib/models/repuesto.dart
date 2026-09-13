@@ -23,8 +23,12 @@ class Repuesto {
     description: json['description'] ?? '',
     brand: json['brand'],
     category: json['category'],
-    priceWithoutTax: json['price_without_tax'] != null ? double.tryParse(json['price_without_tax'].toString()) : null,
-    stockMain: json['stock_main'] != null ? int.tryParse(json['stock_main'].toString()) : null,
+    priceWithoutTax: json['price_without_tax'] != null
+        ? double.tryParse(json['price_without_tax'].toString())
+        : null,
+    stockMain: json['stock_main'] != null
+        ? int.tryParse(json['stock_main'].toString())
+        : null,
   );
 
   Map<String, dynamic> toJson() => {

@@ -9,7 +9,7 @@ class GarageApp extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(goRouterProvider);
-    
+
     return MaterialApp.router(
       title: 'Taller Integrale\$',
       debugShowCheckedModeBanner: false,
@@ -18,4 +18,3 @@ class GarageApp extends HookConsumerWidget {
     );
   }
 }
-

@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../models/vehiculo.dart';
 import '../../../../models/cliente.dart';
+import '../../../../models/peritaje.dart';
 import '../../../../core/widgets/searchable_dropdown.dart';
+import '../providers/peritajes_provider.dart';
 
 class PeritajeFormPage extends HookConsumerWidget {
   const PeritajeFormPage({super.key});
@@ -19,9 +21,13 @@ class PeritajeFormPage extends HookConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Nueva Inspección',
-            style: TextStyle(
-                color: AppColors.secondary, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Nueva Inspección',
+          style: TextStyle(
+            color: AppColors.secondary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.secondary),
@@ -34,9 +40,10 @@ class PeritajeFormPage extends HookConsumerWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4)),
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
             ],
           ),
           padding: const EdgeInsets.all(24),
@@ -82,29 +89,36 @@ class PeritajeFormPage extends HookConsumerWidget {
                 },
               ),
               const SizedBox(height: 20),
-              const Text('Tipo de Inspección',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: AppColors.secondary)),
+              const Text(
+                'Tipo de Inspección',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: AppColors.secondary,
+                ),
+              ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: inspectionTypeController,
                 decoration: InputDecoration(
                   hintText: 'Revisión mecánica, latonería, etc.',
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                   filled: true,
                   fillColor: Colors.grey.shade100,
                 ),
               ),
               const SizedBox(height: 20),
-              const Text('Observaciones',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: AppColors.secondary)),
+              const Text(
+                'Observaciones',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: AppColors.secondary,
+                ),
+              ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: observationsController,
@@ -112,8 +126,9 @@ class PeritajeFormPage extends HookConsumerWidget {
                 decoration: InputDecoration(
                   hintText: 'Escribe aquí las notas generales del vehículo...',
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                   filled: true,
                   fillColor: Colors.grey.shade100,
                 ),
@@ -126,27 +141,75 @@ class PeritajeFormPage extends HookConsumerWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     if (vehicleIdNotifier.value == null ||
                         clientIdNotifier.value == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text('Debe seleccionar Vehículo y Cliente',
-                              style: TextStyle(color: Colors.white)),
-                          backgroundColor: Colors.red));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Debe seleccionar Vehículo y Cliente'),
+                          backgroundColor: AppColors.danger,
+                        ),
+                      );
                       return;
                     }
-                    // TODO: Implementar lógica de guardado
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text('Peritaje guardado correctamente')));
-                    context.pop();
+                    try {
+                      final newPeritaje = Peritaje(
+                        vehiclesFkId: vehicleIdNotifier.value!,
+                        clientsFkId: clientIdNotifier.value,
+                        inspectionType:
+                            inspectionTypeController.text.trim().isNotEmpty
+                            ? inspectionTypeController.text.trim()
+                            : 'general',
+                        inspectionDate: DateTime.now().toIso8601String(),
+                        observations:
+                            observationsController.text.trim().isNotEmpty
+                            ? observationsController.text.trim()
+                            : null,
+                        status: 'pending',
+                      );
+
+                      final created = await ref
+                          .read(peritajesProvider.notifier)
+                          .addPeritaje(newPeritaje);
+
+                      if (context.mounted) {
+                        if (created != null && created.id != null) {
+                          context.pushReplacement(
+                            '/peritajes/camara',
+                            extra: created,
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Peritaje guardado en la Lambda'),
+                              backgroundColor: AppColors.success,
+                            ),
+                          );
+                          context.pop();
+                        }
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error al guardar: $e'),
+                            backgroundColor: AppColors.danger,
+                          ),
+                        );
+                      }
+                    }
                   },
-                  child: const Text('Continuar a Grabación',
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white)),
+                  child: const Text(
+                    'Continuar a Grabación',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
             ],

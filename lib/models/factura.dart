@@ -29,8 +29,12 @@ class Factura {
     noteDate: json['note_date'],
     clientName: json['client_name'],
     licensePlate: json['license_plate'],
-    subtotal: json['subtotal'] != null ? double.tryParse(json['subtotal'].toString()) : null,
-    total: json['total'] != null ? double.tryParse(json['total'].toString()) : null,
+    subtotal: json['subtotal'] != null
+        ? double.tryParse(json['subtotal'].toString())
+        : null,
+    total: json['total'] != null
+        ? double.tryParse(json['total'].toString())
+        : null,
   );
 
   Map<String, dynamic> toJson() => {

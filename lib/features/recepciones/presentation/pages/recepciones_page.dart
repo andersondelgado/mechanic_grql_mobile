@@ -17,9 +17,13 @@ class RecepcionesPage extends HookConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(isAdmin ? 'Órdenes de Trabajo' : 'Mis Órdenes',
-            style: const TextStyle(
-                color: AppColors.secondary, fontWeight: FontWeight.bold)),
+        title: Text(
+          isAdmin ? 'Órdenes de Trabajo' : 'Mis Órdenes',
+          style: const TextStyle(
+            color: AppColors.secondary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -36,8 +40,11 @@ class RecepcionesPage extends HookConsumerWidget {
         data: (recepciones) {
           if (recepciones.isEmpty) {
             return const Center(
-                child: Text('No hay órdenes registradas',
-                    style: TextStyle(color: AppColors.textSecondary)));
+              child: Text(
+                'No hay órdenes registradas',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            );
           }
           return RefreshIndicator(
             onRefresh: () =>
@@ -52,34 +59,47 @@ class RecepcionesPage extends HookConsumerWidget {
                   elevation: 0,
                   margin: const EdgeInsets.only(bottom: 12),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: const BorderSide(color: Color(0xFFF1F5F9))),
+                    borderRadius: BorderRadius.circular(16),
+                    side: const BorderSide(color: Color(0xFFF1F5F9)),
+                  ),
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundColor:
-                          _getStatusColor(rec.status).withValues(alpha: 0.1),
-                      child: Icon(Icons.receipt_long,
-                          color: _getStatusColor(rec.status)),
+                      backgroundColor: _getStatusColor(
+                        rec.status,
+                      ).withValues(alpha: 0.1),
+                      child: Icon(
+                        Icons.receipt_long,
+                        color: _getStatusColor(rec.status),
+                      ),
                     ),
-                    title: Text('Orden #${rec.id?.substring(0, 8) ?? 'N/A'}',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.secondary)),
+                    title: Text(
+                      'Orden #${rec.id != null && rec.id!.length >= 8 ? rec.id!.substring(0, 8) : (rec.id ?? 'N/A')}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.secondary,
+                      ),
+                    ),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Estado: ${rec.status}',
-                            style: TextStyle(
-                                color: _getStatusColor(rec.status),
-                                fontWeight: FontWeight.w500)),
+                        Text(
+                          'Estado: ${rec.status}',
+                          style: TextStyle(
+                            color: _getStatusColor(rec.status),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                         if (rec.licensePlate != null)
                           Text(
-                              'Placa: ${rec.licensePlate} - ${rec.brand ?? ''}',
-                              style: const TextStyle(fontSize: 12)),
+                            'Placa: ${rec.licensePlate} - ${rec.brand ?? ''}',
+                            style: const TextStyle(fontSize: 12),
+                          ),
                       ],
                     ),
-                    trailing:
-                        const Icon(Icons.chevron_right, color: Colors.grey),
+                    trailing: const Icon(
+                      Icons.chevron_right,
+                      color: Colors.grey,
+                    ),
                     isThreeLine: true,
                     onTap: () {
                       // context.push('/recepciones/${rec.id}');
@@ -91,10 +111,14 @@ class RecepcionesPage extends HookConsumerWidget {
           );
         },
         loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.primary)),
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
         error: (err, stack) => Center(
-            child: Text('Error: $err',
-                style: const TextStyle(color: AppColors.danger))),
+          child: Text(
+            'Error: $err',
+            style: const TextStyle(color: AppColors.danger),
+          ),
+        ),
       ),
     );
   }

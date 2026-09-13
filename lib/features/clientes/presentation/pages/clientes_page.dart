@@ -14,7 +14,13 @@ class ClientesPage extends HookConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Clientes', style: TextStyle(color: AppColors.secondary, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Clientes',
+          style: TextStyle(
+            color: AppColors.secondary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -29,10 +35,16 @@ class ClientesPage extends HookConsumerWidget {
       body: clientesState.when(
         data: (clientes) {
           if (clientes.isEmpty) {
-            return const Center(child: Text('No hay clientes registrados', style: TextStyle(color: AppColors.textSecondary)));
+            return const Center(
+              child: Text(
+                'No hay clientes registrados',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            );
           }
           return RefreshIndicator(
-            onRefresh: () => ref.read(clientesProvider.notifier).fetchClientes(),
+            onRefresh: () =>
+                ref.read(clientesProvider.notifier).fetchClientes(),
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: clientes.length,
@@ -47,16 +59,51 @@ class ClientesPage extends HookConsumerWidget {
                     side: const BorderSide(color: Color(0xFFF1F5F9)),
                   ),
                   child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     leading: CircleAvatar(
                       backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                      child: Text(cliente.nombre.substring(0, 1).toUpperCase(), style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                      child: Text(
+                        cliente.nombre.trim().isNotEmpty
+                            ? cliente.nombre
+                                  .trim()
+                                  .substring(0, 1)
+                                  .toUpperCase()
+                            : 'C',
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                    title: Text(cliente.nombre, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.secondary)),
-                    subtitle: Text(cliente.telefono, style: const TextStyle(color: AppColors.textSecondary)),
-                    trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                    title: Text(
+                      cliente.nombre.trim().isNotEmpty
+                          ? cliente.nombre.trim()
+                          : 'Cliente #${cliente.id ?? ''}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.secondary,
+                      ),
+                    ),
+                    subtitle: Text(
+                      cliente.telefono.trim().isNotEmpty
+                          ? cliente.telefono.trim()
+                          : (cliente.ci.trim().isNotEmpty
+                                ? 'CI: ${cliente.ci.trim()}'
+                                : 'Sin teléfono'),
+                      style: const TextStyle(color: AppColors.textSecondary),
+                    ),
+                    trailing: const Icon(
+                      Icons.chevron_right,
+                      color: Colors.grey,
+                    ),
                     onTap: () {
-                      context.push('/clientes/${cliente.id}/editar', extra: cliente);
+                      context.push(
+                        '/clientes/${cliente.id}/editar',
+                        extra: cliente,
+                      );
                     },
                   ),
                 );
@@ -64,20 +111,39 @@ class ClientesPage extends HookConsumerWidget {
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
         error: (error, stack) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, color: AppColors.danger, size: 48),
+              const Icon(
+                Icons.error_outline,
+                color: AppColors.danger,
+                size: 48,
+              ),
               const SizedBox(height: 16),
-              const Text('Error al cargar clientes', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
-              Text(error.toString(), style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+              const Text(
+                'Error al cargar clientes',
+                style: TextStyle(
+                  color: AppColors.danger,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                error.toString(),
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                ),
+              ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () => ref.read(clientesProvider.notifier).fetchClientes(),
+                onPressed: () =>
+                    ref.read(clientesProvider.notifier).fetchClientes(),
                 child: const Text('Reintentar'),
-              )
+              ),
             ],
           ),
         ),
@@ -85,4 +151,3 @@ class ClientesPage extends HookConsumerWidget {
     );
   }
 }
-

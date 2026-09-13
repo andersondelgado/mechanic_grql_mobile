@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/user_model.dart';
+import '../../../../core/network/providers.dart';
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(ref);
@@ -41,84 +43,161 @@ class AuthNotifier extends StateNotifier<AuthState> {
     checkSession();
   }
 
+  /// Verifica si hay una sesión activa en SharedPreferences
   Future<void> checkSession() async {
     state = state.copyWith(isLoading: true);
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
       final lambdaToken = prefs.getString('lambdaToken');
-      
-      // MOCK: Obtener usuario almacenado si existiese
-      final username = prefs.getString('username');
-      final role = prefs.getString('role');
-      
-      if (token != null && lambdaToken != null && role != null) {
-        state = state.copyWith(
-          isAuthenticated: true,
-          isLoading: false,
-          user: UserModel(
-            id: 'mock_id',
-            username: username ?? 'Usuario',
-            role: role,
-            clientsFkId: prefs.getString('clientsFkId'),
-          ),
-        );
+      final userJson = prefs.getString('user');
+
+      if (token != null && lambdaToken != null && userJson != null) {
+        try {
+          final userMap = jsonDecode(userJson) as Map<String, dynamic>;
+          state = state.copyWith(
+            isAuthenticated: true,
+            isLoading: false,
+            user: UserModel.fromJson(userMap),
+          );
+        } catch (_) {
+          // Token expirado o user corrupto
+          await _clearSession();
+          state = state.copyWith(isAuthenticated: false, isLoading: false);
+        }
       } else {
         state = state.copyWith(isAuthenticated: false, isLoading: false);
       }
     } catch (e) {
-      state = state.copyWith(isAuthenticated: false, isLoading: false, error: e.toString());
+      state = state.copyWith(
+        isAuthenticated: false,
+        isLoading: false,
+        error: e.toString(),
+      );
     }
   }
 
-  Future<void> login(String username, String password, {bool isAdminLogin = false}) async {
+  /// Login real contra workflow_security (equivalente a use-auth.tsx login)
+  Future<void> login(String username, String password) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      // Simulacion de llamada al Security Lambda
-      // En un entorno real llamariamos a workflow_security (signin)
-      /*
-      final request = buildMutationRequest(
-        flowName: 'workflow_security',
-        stepName: 'security',
-        actionName: 'signin',
-        params: {'body': {'username': username, 'password': password}},
-      );
-      final response = await apiClient.workflowJson(request: request, lambdaId: 'id_de_seguridad');
-      */
+      final apiClient = ref.read(apiClientProvider);
 
-      // Simulamos la respuesta basándonos en si marcamos el checkbox "Admin" o no.
-      await Future.delayed(const Duration(seconds: 1)); // Falso retardo
-      
-      final String role = isAdminLogin ? 'admin' : 'client';
-      final String clientsFkId = isAdminLogin ? '' : 'CL-001'; // ID del cliente si es client
+      // Llamar a workflow_security → security → signin
+      final response = await apiClient.signIn(username, password);
 
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('token', 'mock_jwt_token_123');
-      await prefs.setString('lambdaToken', 'mock_lambda_token_456');
-      await prefs.setString('username', username);
-      await prefs.setString('role', role);
-      if (!isAdminLogin) {
-        await prefs.setString('clientsFkId', clientsFkId);
+      final signinData = response['security']?['signin'];
+      if (signinData == null || signinData['token'] == null) {
+        final errorMsg =
+            response['error'] ??
+            'Login fallido: estructura de respuesta inválida';
+        throw Exception(errorMsg);
       }
+
+      final String token = signinData['token'] as String;
+
+      // Decodificar JWT para extraer info del usuario (igual que use-auth.tsx)
+      String userId = '';
+      String role = 'admin';
+      String? clientsFkId;
+      try {
+        final parts = token.split('.');
+        if (parts.length >= 2) {
+          var payload = parts[1];
+          // Normalizar base64url
+          payload = payload.replaceAll('-', '+').replaceAll('_', '/');
+          // Agregar padding si es necesario
+          while (payload.length % 4 != 0) {
+            payload += '=';
+          }
+          final decoded = jsonDecode(utf8.decode(base64.decode(payload)));
+          userId =
+              decoded['userId']?.toString() ?? decoded['id']?.toString() ?? '';
+          role =
+              decoded['role']?.toString() ??
+              decoded['rol']?.toString() ??
+              'admin';
+          clientsFkId =
+              decoded['clients_fk_id']?.toString() ??
+              decoded['clientsFkId']?.toString();
+        }
+      } catch (_) {
+        // Si falla el decode, usar valores por defecto
+      }
+
+      // Guardar tokens (el token JWT se usa como lambdaToken, igual que en el web)
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', token);
+      await prefs.setString('lambdaToken', token);
+
+      // Crear objeto usuario
+      final user = UserModel(
+        id: userId.isNotEmpty ? userId : 'admin',
+        username: username,
+        role: role,
+        clientsFkId: clientsFkId,
+      );
+
+      // Guardar user como JSON para persistir entre sesiones
+      await prefs.setString('user', jsonEncode(user.toJson()));
 
       state = state.copyWith(
         isAuthenticated: true,
         isLoading: false,
-        user: UserModel(
-          id: 'mock_id',
-          username: username,
-          role: role,
-          clientsFkId: isAdminLogin ? null : clientsFkId,
-        ),
+        user: user,
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'Credenciales inválidas o error de red');
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString().replaceAll('Exception: ', ''),
+      );
     }
   }
 
+  /// Login mock para desarrollo (sin backend)
+  Future<void> loginMock(String username, {bool isAdminLogin = true}) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await Future.delayed(const Duration(seconds: 1));
+
+      final String role = isAdminLogin ? 'admin' : 'client';
+
+      final user = UserModel(
+        id: 'mock_id',
+        username: username,
+        role: role,
+        clientsFkId: isAdminLogin ? null : 'CL-001',
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', 'mock_jwt_token_123');
+      await prefs.setString('lambdaToken', 'mock_lambda_token_456');
+      await prefs.setString('user', jsonEncode(user.toJson()));
+
+      state = state.copyWith(
+        isAuthenticated: true,
+        isLoading: false,
+        user: user,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Credenciales inválidas o error de red',
+      );
+    }
+  }
+
+  /// Cierra la sesión y limpia todo
   Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await _clearSession();
     state = AuthState(isAuthenticated: false, isLoading: false);
+  }
+
+  Future<void> _clearSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('token');
+    await prefs.remove('lambdaToken');
+    await prefs.remove('user');
+    await prefs.remove('owner');
   }
 }

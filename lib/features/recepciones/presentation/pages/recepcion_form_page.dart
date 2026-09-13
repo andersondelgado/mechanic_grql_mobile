@@ -3,14 +3,16 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../models/vehiculo.dart';
+import '../../../../models/recepcion.dart';
 import '../../../../core/widgets/searchable_dropdown.dart';
+import '../providers/recepciones_provider.dart';
 
 class RecepcionFormPage extends HookConsumerWidget {
   const RecepcionFormPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final vehicleIdNotifier = ValueNotifier<String?>(null);
+    final selectedVehicleNotifier = ValueNotifier<Vehiculo?>(null);
     final ownerNameController = TextEditingController();
     final ownerPhoneController = TextEditingController();
     final observationsController = TextEditingController();
@@ -18,9 +20,13 @@ class RecepcionFormPage extends HookConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Nueva Ficha de Recepción',
-            style: TextStyle(
-                color: AppColors.secondary, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Nueva Ficha de Recepción',
+          style: TextStyle(
+            color: AppColors.secondary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.secondary),
@@ -33,9 +39,10 @@ class RecepcionFormPage extends HookConsumerWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4)),
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
             ],
           ),
           padding: const EdgeInsets.all(24),
@@ -57,33 +64,40 @@ class RecepcionFormPage extends HookConsumerWidget {
                       (veh.model?.toLowerCase().contains(q) ?? false);
                 },
                 onSelected: (Vehiculo? veh) {
-                  vehicleIdNotifier.value = veh?.id;
+                  selectedVehicleNotifier.value = veh;
                 },
               ),
               const SizedBox(height: 20),
-              const Text('Propietario / Cliente',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: AppColors.secondary)),
+              const Text(
+                'Propietario / Cliente',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: AppColors.secondary,
+                ),
+              ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: ownerNameController,
                 decoration: InputDecoration(
                   hintText: 'Nombre de quien entrega',
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                   filled: true,
                   fillColor: Colors.grey.shade100,
                 ),
               ),
               const SizedBox(height: 20),
-              const Text('Teléfono',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: AppColors.secondary)),
+              const Text(
+                'Teléfono',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: AppColors.secondary,
+                ),
+              ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: ownerPhoneController,
@@ -91,18 +105,22 @@ class RecepcionFormPage extends HookConsumerWidget {
                 decoration: InputDecoration(
                   hintText: '0414-XXXXXXX',
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                   filled: true,
                   fillColor: Colors.grey.shade100,
                 ),
               ),
               const SizedBox(height: 20),
-              const Text('Observaciones',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: AppColors.secondary)),
+              const Text(
+                'Observaciones',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: AppColors.secondary,
+                ),
+              ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: observationsController,
@@ -110,8 +128,9 @@ class RecepcionFormPage extends HookConsumerWidget {
                 decoration: InputDecoration(
                   hintText: 'Rayones, estado general al recibir...',
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                   filled: true,
                   fillColor: Colors.grey.shade100,
                 ),
@@ -124,19 +143,70 @@ class RecepcionFormPage extends HookConsumerWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  onPressed: () {
-                    // TODO: Implementar lógica de guardado llamando al provider
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text('Guardado correctamente')));
-                    context.pop();
+                  onPressed: () async {
+                    if (selectedVehicleNotifier.value == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Debe seleccionar un vehículo'),
+                          backgroundColor: AppColors.danger,
+                        ),
+                      );
+                      return;
+                    }
+                    try {
+                      final veh = selectedVehicleNotifier.value!;
+                      final newRecepcion = Recepcion(
+                        vehiclesFkId: veh.id ?? '',
+                        ownerName: ownerNameController.text.trim().isNotEmpty
+                            ? ownerNameController.text.trim()
+                            : null,
+                        licensePlate: veh.licensePlate,
+                        brand: veh.brand,
+                        model: veh.model,
+                        reasonForEntry:
+                            observationsController.text.trim().isNotEmpty
+                            ? observationsController.text.trim()
+                            : null,
+                        entryDate: DateTime.now().toIso8601String(),
+                      );
+
+                      await ref
+                          .read(recepcionesProvider.notifier)
+                          .addRecepcion(newRecepcion);
+
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Ficha de recepción guardada en la Lambda',
+                            ),
+                            backgroundColor: AppColors.success,
+                          ),
+                        );
+                        context.pop();
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error al guardar: $e'),
+                            backgroundColor: AppColors.danger,
+                          ),
+                        );
+                      }
+                    }
                   },
-                  child: const Text('Guardar Ficha',
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white)),
+                  child: const Text(
+                    'Guardar Ficha',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
             ],

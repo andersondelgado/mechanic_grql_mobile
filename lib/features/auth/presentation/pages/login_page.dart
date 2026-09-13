@@ -24,7 +24,9 @@ class LoginPage extends HookConsumerWidget {
       if (next.error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(next.error!), backgroundColor: AppColors.danger),
+            content: Text(next.error!),
+            backgroundColor: AppColors.danger,
+          ),
         );
       }
     });
@@ -47,7 +49,8 @@ class LoginPage extends HookConsumerWidget {
                 elevation: 24,
                 shadowColor: Colors.black.withValues(alpha: 0.5),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24)),
+                  borderRadius: BorderRadius.circular(24),
+                ),
                 color: Colors.white.withValues(alpha: 0.95),
                 child: Padding(
                   padding: const EdgeInsets.all(32.0),
@@ -62,25 +65,30 @@ class LoginPage extends HookConsumerWidget {
                             color: AppColors.primary.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.car_repair,
-                              size: 64, color: AppColors.primary),
+                          child: const Icon(
+                            Icons.car_repair,
+                            size: 64,
+                            color: AppColors.primary,
+                          ),
                         ),
                         const SizedBox(height: 24),
                         const Text(
                           'Taller Integrale\$',
                           style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.secondary,
-                              letterSpacing: -0.5),
+                            fontSize: 28,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.secondary,
+                            letterSpacing: -0.5,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         const Text(
                           'Plataforma de Gestión Automotriz',
                           style: TextStyle(
-                              fontSize: 14,
-                              color: AppColors.textSecondary,
-                              fontWeight: FontWeight.w500),
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                         const SizedBox(height: 40),
                         TextFormField(
@@ -106,20 +114,26 @@ class LoginPage extends HookConsumerWidget {
                         const SizedBox(height: 24),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
-                            color:
-                                AppColors.surfaceLight.withValues(alpha: 0.5),
+                            color: AppColors.surfaceLight.withValues(
+                              alpha: 0.5,
+                            ),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Ingreso Administrativo',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13,
-                                      color: AppColors.textSecondary)),
+                              const Text(
+                                'Ingreso Administrativo',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
                               Switch(
                                 value: isAdmin.value,
                                 activeThumbColor: AppColors.primary,
@@ -135,19 +149,22 @@ class LoginPage extends HookConsumerWidget {
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16)),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
                               elevation: 4,
-                              shadowColor:
-                                  AppColors.primary.withValues(alpha: 0.4),
+                              shadowColor: AppColors.primary.withValues(
+                                alpha: 0.4,
+                              ),
                             ),
                             onPressed: authState.isLoading
                                 ? null
                                 : () {
                                     if (formKey.currentState!.validate()) {
-                                      ref.read(authProvider.notifier).login(
-                                            usernameController.text,
+                                      ref
+                                          .read(authProvider.notifier)
+                                          .login(
+                                            usernameController.text.trim(),
                                             passwordController.text,
-                                            isAdminLogin: isAdmin.value,
                                           );
                                     }
                                   },
@@ -156,12 +173,18 @@ class LoginPage extends HookConsumerWidget {
                                     height: 24,
                                     width: 24,
                                     child: CircularProgressIndicator(
-                                        color: Colors.white, strokeWidth: 2.5))
-                                : const Text('INICIAR SESIÓN',
+                                      color: Colors.white,
+                                      strokeWidth: 2.5,
+                                    ),
+                                  )
+                                : const Text(
+                                    'INICIAR SESIÓN',
                                     style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 1.2)),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
                           ),
                         ),
                       ],

@@ -9,7 +9,8 @@ class Recepcion {
   final String? model;
   final String? reasonForEntry;
   final String? workPerformed;
-  final String status; // Virtual field if we manage states in UI, though not in schema natively (maybe derived from exit_date)
+  final String
+  status; // Virtual field if we manage states in UI, though not in schema natively (maybe derived from exit_date)
 
   Recepcion({
     this.id,

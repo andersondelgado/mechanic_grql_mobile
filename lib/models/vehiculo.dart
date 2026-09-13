@@ -20,19 +20,21 @@ class Vehiculo {
   });
 
   factory Vehiculo.fromJson(Map<String, dynamic> json) => Vehiculo(
-    id: json['id']?.toString(),
-    clientsFkId: json['clients_fk_id'] ?? '',
-    clientName: (json['clients'] != null && (json['clients'] as List).isNotEmpty)
-        ? json['clients'][0]['client_name']
-        : null,
-    brand: json['brand'],
-    model: json['model'],
-    licensePlate: json['license_plate'] ?? '',
-    color: json['color'],
-    vin: json['vin'],
+    id: json['vehicle_id']?.toString() ?? json['id']?.toString(),
+    clientsFkId: json['clients_fk_id']?.toString() ?? '',
+    clientName: json['client_name']?.toString() ??
+        ((json['clients'] != null && (json['clients'] as List).isNotEmpty)
+            ? json['clients'][0]['client_name']?.toString()
+            : null),
+    brand: json['brand']?.toString(),
+    model: json['model']?.toString(),
+    licensePlate: json['license_plate']?.toString() ?? '',
+    color: json['color']?.toString(),
+    vin: json['vin']?.toString(),
   );
 
   Map<String, dynamic> toJson() => {
+    if (id != null) 'vehicle_id': id,
     if (id != null) 'id': id,
     'clients_fk_id': clientsFkId,
     if (brand != null) 'brand': brand,

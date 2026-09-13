@@ -16,9 +16,13 @@ class FacturasPage extends HookConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(isAdmin ? 'Facturación' : 'Mis Facturas',
-            style: const TextStyle(
-                color: AppColors.secondary, fontWeight: FontWeight.bold)),
+        title: Text(
+          isAdmin ? 'Facturación' : 'Mis Facturas',
+          style: const TextStyle(
+            color: AppColors.secondary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -33,8 +37,11 @@ class FacturasPage extends HookConsumerWidget {
         data: (facturas) {
           if (facturas.isEmpty) {
             return const Center(
-                child: Text('No hay facturas registradas',
-                    style: TextStyle(color: AppColors.textSecondary)));
+              child: Text(
+                'No hay facturas registradas',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            );
           }
           return RefreshIndicator(
             onRefresh: () =>
@@ -49,30 +56,42 @@ class FacturasPage extends HookConsumerWidget {
                   elevation: 0,
                   margin: const EdgeInsets.only(bottom: 12),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: const BorderSide(color: Color(0xFFF1F5F9))),
+                    borderRadius: BorderRadius.circular(16),
+                    side: const BorderSide(color: Color(0xFFF1F5F9)),
+                  ),
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: AppColors.success.withValues(alpha: 0.1),
-                      child:
-                          const Icon(Icons.receipt, color: AppColors.success),
+                      child: const Icon(
+                        Icons.receipt,
+                        color: AppColors.success,
+                      ),
                     ),
-                    title: Text(factura.noteNumber,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.secondary)),
+                    title: Text(
+                      factura.noteNumber,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.secondary,
+                      ),
+                    ),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                            'Fecha: ${factura.noteDate?.substring(0, 10) ?? 'N/A'}',
-                            style: const TextStyle(
-                                color: AppColors.textSecondary, fontSize: 12)),
+                          'Fecha: ${factura.noteDate != null && factura.noteDate!.length >= 10 ? factura.noteDate!.substring(0, 10) : (factura.noteDate ?? 'N/A')}',
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
                         if (factura.clientName != null && isAdmin)
-                          Text('Cliente: ${factura.clientName}',
-                              style: const TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 12)),
+                          Text(
+                            'Cliente: ${factura.clientName}',
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
                       ],
                     ),
                     trailing: Text(
@@ -80,9 +99,10 @@ class FacturasPage extends HookConsumerWidget {
                           ? '\$${factura.total!.toStringAsFixed(2)}'
                           : 'N/A',
                       style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                          fontSize: 16),
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                        fontSize: 16,
+                      ),
                     ),
                     isThreeLine: isAdmin && factura.clientName != null,
                   ),
@@ -92,10 +112,14 @@ class FacturasPage extends HookConsumerWidget {
           );
         },
         loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.primary)),
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
         error: (err, stack) => Center(
-            child: Text('Error: $err',
-                style: const TextStyle(color: AppColors.danger))),
+          child: Text(
+            'Error: $err',
+            style: const TextStyle(color: AppColors.danger),
+          ),
+        ),
       ),
     );
   }

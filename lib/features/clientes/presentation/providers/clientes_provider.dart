@@ -3,14 +3,15 @@ import '../../../../core/network/providers.dart';
 import '../../../../models/cliente.dart';
 import '../../../../core/network/api_client.dart';
 
-final clientesProvider = StateNotifierProvider<ClientesNotifier, AsyncValue<List<Cliente>>>((ref) {
-  final apiClient = ref.read(apiClientProvider);
-  return ClientesNotifier(apiClient);
-});
+final clientesProvider =
+    StateNotifierProvider<ClientesNotifier, AsyncValue<List<Cliente>>>((ref) {
+      final apiClient = ref.read(apiClientProvider);
+      return ClientesNotifier(apiClient);
+    });
 
 class ClientesNotifier extends StateNotifier<AsyncValue<List<Cliente>>> {
   final ApiClient _apiClient;
-  
+
   ClientesNotifier(this._apiClient) : super(const AsyncValue.loading()) {
     fetchClientes();
   }
@@ -28,7 +29,10 @@ class ClientesNotifier extends StateNotifier<AsyncValue<List<Cliente>>> {
 
   Future<void> addCliente(Cliente cliente) async {
     try {
-      final jsonResponse = await _apiClient.createEntity('GestionTallerProd_clients', cliente.toJson());
+      final jsonResponse = await _apiClient.createEntity(
+        'GestionTallerProd_clients',
+        cliente.toJson(),
+      );
       if (jsonResponse != null) {
         final newCliente = Cliente.fromJson(jsonResponse);
         if (state.hasValue) {
@@ -45,10 +49,16 @@ class ClientesNotifier extends StateNotifier<AsyncValue<List<Cliente>>> {
   Future<void> updateCliente(Cliente cliente) async {
     if (cliente.id == null) return;
     try {
-      final jsonResponse = await _apiClient.updateEntity('GestionTallerProd_clients', cliente.id!, cliente.toJson());
+      final jsonResponse = await _apiClient.updateEntity(
+        'GestionTallerProd_clients',
+        cliente.id!,
+        cliente.toJson(),
+      );
       if (jsonResponse != null && state.hasValue) {
         final updated = Cliente.fromJson(jsonResponse);
-        final newList = state.value!.map((c) => c.id == updated.id ? updated : c).toList();
+        final newList = state.value!
+            .map((c) => c.id == updated.id ? updated : c)
+            .toList();
         state = AsyncValue.data(newList);
       }
     } catch (e) {

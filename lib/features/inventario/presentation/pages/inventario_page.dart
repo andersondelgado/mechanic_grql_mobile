@@ -13,9 +13,13 @@ class InventarioPage extends HookConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Inventario',
-            style: TextStyle(
-                color: AppColors.secondary, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Inventario',
+          style: TextStyle(
+            color: AppColors.secondary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -29,8 +33,11 @@ class InventarioPage extends HookConsumerWidget {
         data: (repuestos) {
           if (repuestos.isEmpty) {
             return const Center(
-                child: Text('No hay repuestos en el inventario',
-                    style: TextStyle(color: AppColors.textSecondary)));
+              child: Text(
+                'No hay repuestos en el inventario',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            );
           }
           return RefreshIndicator(
             onRefresh: () =>
@@ -45,29 +52,40 @@ class InventarioPage extends HookConsumerWidget {
                   elevation: 0,
                   margin: const EdgeInsets.only(bottom: 12),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: const BorderSide(color: Color(0xFFF1F5F9))),
+                    borderRadius: BorderRadius.circular(16),
+                    side: const BorderSide(color: Color(0xFFF1F5F9)),
+                  ),
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                       child: const Icon(Icons.build, color: AppColors.primary),
                     ),
-                    title: Text(rep.description,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.secondary)),
+                    title: Text(
+                      rep.description,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.secondary,
+                      ),
+                    ),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Código: ${rep.partCode}',
-                            style: const TextStyle(
-                                color: AppColors.textSecondary, fontSize: 12)),
-                        Text('Stock: ${rep.stockMain ?? 0}',
-                            style: TextStyle(
-                                color: (rep.stockMain ?? 0) > 0
-                                    ? AppColors.success
-                                    : AppColors.danger,
-                                fontWeight: FontWeight.bold)),
+                        Text(
+                          'Código: ${rep.partCode}',
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                        Text(
+                          'Stock: ${rep.stockMain ?? 0}',
+                          style: TextStyle(
+                            color: (rep.stockMain ?? 0) > 0
+                                ? AppColors.success
+                                : AppColors.danger,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
                     trailing: Text(
@@ -75,9 +93,10 @@ class InventarioPage extends HookConsumerWidget {
                           ? '\$${rep.priceWithoutTax!.toStringAsFixed(2)}'
                           : 'N/A',
                       style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                          fontSize: 16),
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                        fontSize: 16,
+                      ),
                     ),
                     isThreeLine: true,
                   ),
@@ -87,10 +106,14 @@ class InventarioPage extends HookConsumerWidget {
           );
         },
         loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.primary)),
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
         error: (err, stack) => Center(
-            child: Text('Error: $err',
-                style: const TextStyle(color: AppColors.danger))),
+          child: Text(
+            'Error: $err',
+            style: const TextStyle(color: AppColors.danger),
+          ),
+        ),
       ),
     );
   }

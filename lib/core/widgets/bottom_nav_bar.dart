@@ -20,19 +20,55 @@ class AppBottomNavBar extends HookConsumerWidget {
 
     // Tabs del admin
     final adminTabs = [
-      const BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), activeIcon: Icon(Icons.dashboard), label: 'Inicio'),
-      const BottomNavigationBarItem(icon: Icon(Icons.people_outline), activeIcon: Icon(Icons.people), label: 'Clientes'),
-      const BottomNavigationBarItem(icon: Icon(Icons.receipt_long_outlined), activeIcon: Icon(Icons.receipt_long), label: 'Fichas'),
-      const BottomNavigationBarItem(icon: Icon(Icons.search_outlined), activeIcon: Icon(Icons.search), label: 'Peritajes'),
-      const BottomNavigationBarItem(icon: Icon(Icons.build_outlined), activeIcon: Icon(Icons.build), label: 'Inventario'),
+      const BottomNavigationBarItem(
+        icon: Icon(Icons.dashboard_outlined),
+        activeIcon: Icon(Icons.dashboard),
+        label: 'Inicio',
+      ),
+      const BottomNavigationBarItem(
+        icon: Icon(Icons.people_outline),
+        activeIcon: Icon(Icons.people),
+        label: 'Clientes',
+      ),
+      const BottomNavigationBarItem(
+        icon: Icon(Icons.receipt_long_outlined),
+        activeIcon: Icon(Icons.receipt_long),
+        label: 'Fichas',
+      ),
+      const BottomNavigationBarItem(
+        icon: Icon(Icons.search_outlined),
+        activeIcon: Icon(Icons.search),
+        label: 'Peritajes',
+      ),
+      const BottomNavigationBarItem(
+        icon: Icon(Icons.build_outlined),
+        activeIcon: Icon(Icons.build),
+        label: 'Inventario',
+      ),
     ];
 
     // Tabs del cliente
     final clientTabs = [
-      const BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Inicio'),
-      const BottomNavigationBarItem(icon: Icon(Icons.directions_car_outlined), activeIcon: Icon(Icons.directions_car), label: 'Mis Autos'),
-      const BottomNavigationBarItem(icon: Icon(Icons.search_outlined), activeIcon: Icon(Icons.search), label: 'Peritajes'),
-      const BottomNavigationBarItem(icon: Icon(Icons.receipt_outlined), activeIcon: Icon(Icons.receipt), label: 'Facturas'),
+      const BottomNavigationBarItem(
+        icon: Icon(Icons.home_outlined),
+        activeIcon: Icon(Icons.home),
+        label: 'Inicio',
+      ),
+      const BottomNavigationBarItem(
+        icon: Icon(Icons.directions_car_outlined),
+        activeIcon: Icon(Icons.directions_car),
+        label: 'Mis Autos',
+      ),
+      const BottomNavigationBarItem(
+        icon: Icon(Icons.search_outlined),
+        activeIcon: Icon(Icons.search),
+        label: 'Peritajes',
+      ),
+      const BottomNavigationBarItem(
+        icon: Icon(Icons.receipt_outlined),
+        activeIcon: Icon(Icons.receipt),
+        label: 'Facturas',
+      ),
     ];
 
     final tabs = isAdmin ? adminTabs : clientTabs;
@@ -50,18 +86,36 @@ class AppBottomNavBar extends HookConsumerWidget {
             ref.read(bottomNavIndexProvider.notifier).state = index;
             if (isAdmin) {
               switch (index) {
-                case 0: context.go('/'); break;
-                case 1: context.go('/clientes'); break;
-                case 2: context.go('/recepciones'); break;
-                case 3: context.go('/peritajes'); break;
-                case 4: context.go('/inventario'); break;
+                case 0:
+                  context.go('/');
+                  break;
+                case 1:
+                  context.go('/clientes');
+                  break;
+                case 2:
+                  context.go('/recepciones');
+                  break;
+                case 3:
+                  context.go('/peritajes');
+                  break;
+                case 4:
+                  context.go('/inventario');
+                  break;
               }
             } else {
               switch (index) {
-                case 0: context.go('/'); break;
-                case 1: context.go('/vehiculos'); break;
-                case 2: context.go('/peritajes'); break;
-                case 3: context.go('/facturas'); break;
+                case 0:
+                  context.go('/');
+                  break;
+                case 1:
+                  context.go('/vehiculos');
+                  break;
+                case 2:
+                  context.go('/peritajes');
+                  break;
+                case 3:
+                  context.go('/facturas');
+                  break;
               }
             }
           },
@@ -75,15 +129,18 @@ class AppBottomNavBar extends HookConsumerWidget {
           items: tabs,
         ),
       ),
-      floatingActionButton: isAdmin ? FloatingActionButton(
-        onPressed: () {
-          // TODO: Show Quick Create Sheet or QR Scanner
-        },
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.qr_code_scanner, color: Colors.white),
-      ) : null,
-      floatingActionButtonLocation: isAdmin ? FloatingActionButtonLocation.centerDocked : null,
+      floatingActionButton: isAdmin
+          ? FloatingActionButton(
+              onPressed: () {
+                // TODO: Show Quick Create Sheet or QR Scanner
+              },
+              backgroundColor: AppColors.primary,
+              child: const Icon(Icons.qr_code_scanner, color: Colors.white),
+            )
+          : null,
+      floatingActionButtonLocation: isAdmin
+          ? FloatingActionButtonLocation.centerDocked
+          : null,
     );
   }
 }
-

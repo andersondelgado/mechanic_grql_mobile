@@ -14,17 +14,21 @@
 .swiftpm/
 migrate_working_dir/
 
+# Environment variables & secrets
+env.json
+*.env
+.env*
+
 # IntelliJ related
 *.iml
 *.ipr
 *.iws
 .idea/
-.vscode/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# VS Code settings / launch
+.vscode/*
+#!.vscode/launch.json
+#!.vscode/settings.json
 
 # Flutter/Dart/Pub related
 **/doc/api/
@@ -60,3 +64,9 @@ android/keystore.properties
 
 # FVM Version Cache
 .fvm/
+
+# Environment configurations and secrets
+env.json
+*.env
+.env*
+!env.json.example

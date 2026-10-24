@@ -327,6 +327,112 @@ class ApiClient {
     }
   }
 
+  // ─── Portal del Cliente & Consultas de Vehículo ─────────────────────
+
+  /// Búsqueda de vehículos por placa (exacta o parcial)
+  Future<List<Map<String, dynamic>>> searchVehiclesByPlate(String plate) async {
+    final clean = plate.trim().toUpperCase().replaceAll(' ', '').replaceAll('-', '');
+    final all = await getEntity('GestionTallerProd_vehicles', query: WorkflowQuery(pagination: {'page': 1, 'size': 500}));
+    final matches = all.where((item) {
+      if (item is! Map) return false;
+      final p = (item['license_plate'] ?? item['plate'] ?? '')
+          .toString()
+          .trim()
+          .toUpperCase()
+          .replaceAll(' ', '')
+          .replaceAll('-', '');
+      return p.isNotEmpty && (p.contains(clean) || clean.contains(p));
+    }).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    return matches;
+  }
+
+  /// Búsqueda de clientes por documento de identidad / tax_id o nombre
+  Future<List<Map<String, dynamic>>> searchClientsByTaxId(String doc) async {
+    final clean = doc.trim().toLowerCase().replaceAll('.', '').replaceAll('-', '');
+    final all = await getEntity('GestionTallerProd_clients', query: WorkflowQuery(pagination: {'page': 1, 'size': 500}));
+    final matches = all.where((item) {
+      if (item is! Map) return false;
+      final t = (item['tax_id'] ?? item['ci'] ?? '')
+          .toString()
+          .trim()
+          .toLowerCase()
+          .replaceAll('.', '')
+          .replaceAll('-', '');
+      final n = (item['client_name'] ?? item['name'] ?? '').toString().trim().toLowerCase();
+      return (t.isNotEmpty && (t.contains(clean) || clean.contains(t))) ||
+          (n.isNotEmpty && n.contains(clean));
+    }).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    return matches;
+  }
+
+  /// Obtener todos los peritajes con su análisis IA asociado para un vehículo
+  Future<List<Map<String, dynamic>>> getPeritajesForVehicle(String vehicleId) async {
+    final peritajes = await getEntity('GestionTallerProd_inspection_cards', query: WorkflowQuery(pagination: {'page': 1, 'size': 100}));
+    final analyses = await getEntity('GestionTallerProd_inspection_analysis', query: WorkflowQuery(pagination: {'page': 1, 'size': 200}));
+
+    final list = <Map<String, dynamic>>[];
+    for (final p in peritajes) {
+      if (p is! Map) continue;
+      final vId = (p['vehicles_fk_id'] ?? p['vehicle_id'] ?? '').toString();
+      if (vId == vehicleId) {
+        final pMap = Map<String, dynamic>.from(p.cast<String, dynamic>());
+        final pId = (pMap['id'] ?? pMap['card_id'] ?? '').toString();
+
+        final matchAnalysis = analyses.firstWhere((a) {
+          if (a is! Map) return false;
+          final fk = (a['inspection_cards_fk_id'] ?? '').toString();
+          return fk == pId;
+        }, orElse: () => null);
+
+        if (matchAnalysis != null && matchAnalysis is Map) {
+          pMap['inspection_analysis'] = [matchAnalysis.cast<String, dynamic>()];
+          pMap['analysis'] = matchAnalysis.cast<String, dynamic>();
+        }
+        list.add(pMap);
+      }
+    }
+    return list;
+  }
+
+  /// Obtener todas las recepciones para un vehículo
+  Future<List<Map<String, dynamic>>> getRecepcionesForVehicle(String vehicleId) async {
+    final all = await getEntity('GestionTallerProd_vehicle_receipts', query: WorkflowQuery(pagination: {'page': 1, 'size': 100}));
+    return all.where((r) {
+      if (r is! Map) return false;
+      final vId = (r['vehicles_fk_id'] ?? r['vehicle_id'] ?? '').toString();
+      return vId == vehicleId;
+    }).map((e) => (e as Map).cast<String, dynamic>()).toList();
+  }
+
+  /// Obtener todas las cotizaciones/presupuestos para un vehículo
+  Future<List<Map<String, dynamic>>> getQuotesForVehicle(String vehicleId) async {
+    final all = await getEntity('GestionTallerProd_quotes', query: WorkflowQuery(pagination: {'page': 1, 'size': 100}));
+    return all.where((q) {
+      if (q is! Map) return false;
+      final vId = (q['vehicles_fk_id'] ?? q['vehicle_id'] ?? '').toString();
+      return vId == vehicleId;
+    }).map((e) => (e as Map).cast<String, dynamic>()).toList();
+  }
+
+  /// Guardar la firma digital del cliente en peritaje
+  Future<dynamic> savePeritajeSignature(String peritajeId, String signatureBase64) async {
+    final now = DateTime.now().toIso8601String();
+    return updateEntity('GestionTallerProd_inspection_cards', peritajeId, {
+      'client_signature': signatureBase64,
+      'client_signature_date': now,
+      'status': 'completado',
+    });
+  }
+
+  /// Guardar la firma digital del cliente en recepción
+  Future<dynamic> saveRecepcionSignature(String receiptId, String signatureBase64) async {
+    final now = DateTime.now().toIso8601String();
+    return updateEntity('GestionTallerProd_vehicle_receipts', receiptId, {
+      'client_signature': signatureBase64,
+      'client_signature_date': now,
+    });
+  }
+
   // ─── Auth (equivalente a security.service.ts) ─────────────────────────
 
   Future<Map<String, dynamic>> signIn(String username, String password) async {

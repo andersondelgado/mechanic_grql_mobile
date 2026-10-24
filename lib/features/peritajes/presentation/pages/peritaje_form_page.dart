@@ -66,6 +66,9 @@ class PeritajeFormPage extends HookConsumerWidget {
                 },
                 onSelected: (Vehiculo? veh) {
                   vehicleIdNotifier.value = veh?.id;
+                  if (veh != null && veh.clientsFkId.isNotEmpty) {
+                    clientIdNotifier.value = veh.clientsFkId;
+                  }
                 },
               ),
               const SizedBox(height: 20),

@@ -128,21 +128,39 @@ WorkflowRequest buildQueryRequest({
   required String actionName,
   WorkflowQuery? query,
 }) {
-  // Inyectar _inverse_fk: true en arrayFilter por defecto (como hace el web)
-  final existingArrayFilter = query?.arrayFilter ?? [];
-  final hasInverseFk = existingArrayFilter.any(
+  final rawArrayFilter = query?.arrayFilter ?? [];
+  final List<Map<String, dynamic>> normalizedArrayFilter = [];
+
+  for (final item in rawArrayFilter) {
+    if (item.containsKey('field')) {
+      normalizedArrayFilter.add(Map<String, dynamic>.from(item));
+    } else {
+      item.forEach((k, v) {
+        normalizedArrayFilter.add({'field': k, 'value': v});
+      });
+    }
+  }
+
+  final hasInverseFk = normalizedArrayFilter.any(
     (f) => f['field'] == '_inverse_fk',
   );
   final arrayFilter = hasInverseFk
-      ? existingArrayFilter
+      ? normalizedArrayFilter
       : [
           {'field': '_inverse_fk', 'value': true},
-          ...existingArrayFilter,
+          ...normalizedArrayFilter,
         ];
+
+  if (query?.filter != null) {
+    query!.filter!.forEach((k, v) {
+      if (!arrayFilter.any((f) => f['field'] == k)) {
+        arrayFilter.add({'field': k, 'value': v});
+      }
+    });
+  }
 
   final mergedQuery = WorkflowQuery(
     pagination: query?.pagination ?? {'page': 1, 'size': 100},
-    filter: query?.filter,
     arrayFilter: arrayFilter,
     extraFilter: query?.extraFilter,
     avanzedFilter: query?.avanzedFilter,

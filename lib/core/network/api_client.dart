@@ -202,7 +202,11 @@ class ApiClient {
       flowName: workflowName,
       stepName: table,
       actionName: 'get',
-      query: WorkflowQuery(filter: {'id': id}),
+      query: WorkflowQuery(
+        arrayFilter: [
+          {'field': 'id', 'value': id}
+        ],
+      ),
     );
     final response = await workflowJson(request: request);
     final data = extractData(response);

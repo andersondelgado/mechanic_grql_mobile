@@ -11,7 +11,7 @@ class GarageApp extends HookConsumerWidget {
     final router = ref.watch(goRouterProvider);
 
     return MaterialApp.router(
-      title: 'Taller Integrale\$',
+      title: 'Taller Integral',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       routerConfig: router,

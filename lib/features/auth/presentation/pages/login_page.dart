@@ -81,7 +81,7 @@ class LoginPage extends HookConsumerWidget {
                         ),
                         const SizedBox(height: 24),
                         const Text(
-                          'Taller Integrale\$',
+                          'Taller Integral',
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.w900,

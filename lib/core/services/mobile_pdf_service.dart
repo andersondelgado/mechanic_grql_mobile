@@ -557,7 +557,7 @@ class MobilePdfService {
               // Pie de página
               pw.Center(
                 child: pw.Text(
-                  'Documento de diagnóstico y evaluación asistido por IA generativa • Taller Integrale\$ 360 Garage C.A.',
+                  'Documento de diagnóstico y evaluación asistido por IA generativa • Taller Integral 360 Garage C.A.',
                   style: const pw.TextStyle(fontSize: 6.5, color: PdfColors.grey500),
                 ),
               ),
@@ -915,7 +915,7 @@ class MobilePdfService {
 
               pw.Center(
                 child: pw.Text(
-                  'Ficha Técnica y Acta de Recepción Vehicular • Taller Integrale\$ 360 Garage C.A.',
+                  'Ficha Técnica y Acta de Recepción Vehicular • Taller Integral 360 Garage C.A.',
                   style: const pw.TextStyle(fontSize: 6.5, color: PdfColors.grey500),
                 ),
               ),

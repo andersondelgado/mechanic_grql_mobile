@@ -320,7 +320,7 @@ class _InformePeritajePageState extends ConsumerState<InformePeritajePage> {
                       // Pie de página
                       const Center(
                         child: Text(
-                          'Documento oficial de dictamen técnico asistido por IA Gemini • Taller Integrale\$ 360 Garage C.A.',
+                          'Documento oficial de dictamen técnico asistido por IA Gemini • Taller Integral 360 Garage C.A.',
                           textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
                         ),

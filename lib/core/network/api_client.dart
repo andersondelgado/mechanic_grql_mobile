@@ -430,6 +430,23 @@ class ApiClient {
     }).map((e) => (e as Map).cast<String, dynamic>()).toList();
   }
 
+  /// Obtener todas las órdenes de latonería/taller para un vehículo
+  Future<List<Map<String, dynamic>>> getBodyShopOrdersForVehicle(String vehicleId, {String? licensePlate}) async {
+    final all = await getEntity('GestionTallerProd_body_shop_orders', query: WorkflowQuery(pagination: {'page': 1, 'size': 100}));
+    final cleanPlate = licensePlate?.trim().toUpperCase().replaceAll(' ', '').replaceAll('-', '') ?? '';
+
+    return all.where((o) {
+      if (o is! Map) return false;
+      final vId = (o['vehicles_fk_id'] ?? o['vehicle_id'] ?? '').toString();
+      final plate = (o['license_plate'] ?? o['plate'] ?? '').toString().trim().toUpperCase().replaceAll(' ', '').replaceAll('-', '');
+      final work = (o['work_performed'] ?? o['description'] ?? '').toString().trim().toUpperCase();
+
+      return (vehicleId.isNotEmpty && vId == vehicleId) ||
+          (cleanPlate.isNotEmpty && plate == cleanPlate) ||
+          (cleanPlate.isNotEmpty && cleanPlate.length >= 4 && work.contains(cleanPlate));
+    }).map((e) => (e as Map).cast<String, dynamic>()).toList();
+  }
+
   /// Guardar la firma digital del cliente en peritaje
   Future<dynamic> savePeritajeSignature(String peritajeId, String signatureBase64) async {
     final now = DateTime.now().toIso8601String();

@@ -182,6 +182,62 @@ class _ConsultaClientePageState extends ConsumerState<ConsultaClientePage> {
         }
       }
 
+      // 4. Fallback: Buscar directamente en Órdenes de Latonería (body_shop_orders)
+      final allOrders = await client.getEntity(
+        'GestionTallerProd_body_shop_orders',
+        query: WorkflowQuery(pagination: {'page': 1, 'size': 200}),
+      );
+      for (final o in allOrders) {
+        if (o is! Map) continue;
+        final plate = (o['license_plate'] ?? '').toString().trim().toUpperCase().replaceAll(' ', '').replaceAll('-', '');
+        final orderNum = (o['order_number'] ?? '').toString().trim().toUpperCase().replaceAll(' ', '').replaceAll('-', '');
+        final taxId = (o['tax_id'] ?? '').toString().trim().toUpperCase().replaceAll(' ', '').replaceAll('.', '').replaceAll('-', '');
+        final clientName = (o['client_name'] ?? '').toString().trim().toUpperCase();
+        final work = (o['work_performed'] ?? o['description'] ?? '').toString().trim().toUpperCase();
+
+        if ((plate.isNotEmpty && (plate.contains(clean) || clean.contains(plate))) ||
+            (orderNum.isNotEmpty && (orderNum.contains(clean) || clean.contains(orderNum))) ||
+            (taxId.isNotEmpty && (taxId.contains(clean) || clean.contains(taxId))) ||
+            (clientName.isNotEmpty && clientName.contains(clean)) ||
+            (clean.length >= 4 && work.contains(clean))) {
+          Vehiculo? veh;
+          final oVehList = o['vehicles'];
+          if (oVehList is List && oVehList.isNotEmpty && oVehList.first is Map) {
+            veh = Vehiculo.fromJson((oVehList.first as Map).cast<String, dynamic>());
+          } else {
+            veh = Vehiculo(
+              id: (o['vehicles_fk_id'] ?? '').toString(),
+              clientsFkId: (o['clients_fk_id'] ?? '').toString(),
+              licensePlate: (o['license_plate'] ?? query).toString(),
+              brand: o['brand']?.toString(),
+              model: o['model']?.toString(),
+              color: o['color']?.toString(),
+            );
+          }
+
+          Cliente? cli;
+          final oCliList = o['clients'];
+          if (oCliList is List && oCliList.isNotEmpty && oCliList.first is Map) {
+            cli = Cliente.fromJson((oCliList.first as Map).cast<String, dynamic>());
+          } else {
+            cli = Cliente(
+              id: (o['clients_fk_id'] ?? '').toString(),
+              nombre: (o['client_name'] ?? 'Cliente').toString(),
+              ci: (o['tax_id'] ?? query).toString(),
+              telefono: (o['phone'] ?? o['cell_phone'] ?? '').toString(),
+            );
+          }
+
+          if (mounted) {
+            context.push('/portal-cliente', extra: {
+              'vehicle': veh,
+              'client': cli,
+            });
+          }
+          return;
+        }
+      }
+
       // Si no hubo coincidencias
       setState(() {
         _errorMessage =

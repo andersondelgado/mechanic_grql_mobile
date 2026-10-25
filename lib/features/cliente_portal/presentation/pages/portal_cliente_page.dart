@@ -12,6 +12,7 @@ import '../../../../models/cliente.dart';
 import '../../../../models/peritaje.dart';
 import '../../../../models/recepcion.dart';
 import '../../../../models/cotizacion.dart';
+import '../../../../models/orden.dart';
 
 class PortalClientePage extends ConsumerStatefulWidget {
   final Vehiculo vehicle;
@@ -36,6 +37,7 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage> {
   Recepcion? _recepcion;
   Peritaje? _peritaje;
   Cotizacion? _cotizacion;
+  Orden? _orden;
 
   Uint8List? _recepcionSignatureBytes;
   Uint8List? _peritajeSignatureBytes;
@@ -100,11 +102,13 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage> {
         clientApi.getRecepcionesForVehicle(vId, licensePlate: plate),
         clientApi.getPeritajesForVehicle(vId, licensePlate: plate),
         clientApi.getQuotesForVehicle(vId, licensePlate: plate),
+        clientApi.getBodyShopOrdersForVehicle(vId, licensePlate: plate),
       ]);
 
       final recepcionesList = results[0];
       final peritajesList = results[1];
       final quotesList = results[2];
+      final ordersList = results[3];
 
       if (recepcionesList.isNotEmpty) {
         _recepcion = Recepcion.fromJson(recepcionesList.first);
@@ -118,6 +122,10 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage> {
 
       if (quotesList.isNotEmpty) {
         _cotizacion = Cotizacion.fromJson(quotesList.first);
+      }
+
+      if (ordersList.isNotEmpty) {
+        _orden = Orden.fromJson(ordersList.first);
       }
     } catch (e) {
       _error = 'Inconveniente al cargar el historial del vehículo: $e';
@@ -254,8 +262,11 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage> {
 
   // ─── Calcular Estado Actual para Timeline ────────────────────────────────
   int _getCurrentStepIndex() {
-    if (_recepcion?.status == 'completed' || _recepcion?.status == 'completado') {
+    if (_orden?.status == 'completado' || _recepcion?.status == 'completed' || _recepcion?.status == 'completado') {
       return 5; // Listo para entrega
+    }
+    if (_orden != null && (_orden!.status == 'proceso' || _orden!.status == 'en_proceso')) {
+      return 3; // En reparación / latonería
     }
     if (_cotizacion != null && _cotizacion!.status == 'aprobado') {
       return 3; // En reparación
@@ -425,6 +436,9 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage> {
 
                           // Tab 4: Presupuesto & Costos
                           _buildPresupuestoTab(),
+
+                          // Tab 5: Orden de Latonería y Pintura
+                          _buildLatoneriaTab(),
                         ],
                       ),
                     ),
@@ -460,6 +474,12 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage> {
         'icon': Icons.request_quote_rounded,
         'badge': _cotizacion != null ? '\$' : null,
         'badgeColor': const Color(0xFF059669),
+      },
+      {
+        'title': 'Latonería',
+        'icon': Icons.car_repair_rounded,
+        'badge': _orden?.status.toUpperCase(),
+        'badgeColor': const Color(0xFF2563EB),
       },
     ];
 
@@ -2357,6 +2377,152 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage> {
       child: Text(
         label,
         style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: text),
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // TAB 5: ORDEN DE LATONERÍA & PINTURA
+  // ──────────────────────────────────────────────────────────────────────────
+  Widget _buildLatoneriaTab() {
+    if (_orden == null) {
+      return _buildEmptyState(
+        icon: Icons.car_repair_rounded,
+        iconColor: const Color(0xFF2563EB),
+        bgColor: const Color(0xFFEFF6FF),
+        title: 'Sin orden de latonería activa',
+        message:
+            'No hay órdenes de latonería y pintura registradas para este vehículo actualmente.',
+        actionLabel: 'Ver Estado del Vehículo',
+        onAction: () => _goToPage(0),
+      );
+    }
+
+    final o = _orden!;
+    final isDone = o.status.toLowerCase() == 'completado';
+    final isProcess = o.status.toLowerCase() == 'proceso' || o.status.toLowerCase() == 'en_proceso';
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: const BorderSide(color: Color(0xFFCBD5E1)),
+            ),
+            color: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            o.orderNumber,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'Orden de Latonería y Pintura',
+                            style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isDone
+                              ? const Color(0xFFDCFCE7)
+                              : isProcess
+                                  ? const Color(0xFFDBEAFE)
+                                  : const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          o.status.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: isDone
+                                ? const Color(0xFF15803D)
+                                : isProcess
+                                    ? const Color(0xFF1D4ED8)
+                                    : const Color(0xFFB45309),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 24),
+                  if (o.clientName != null && o.clientName!.isNotEmpty) ...[
+                    _specRow('Cliente Titular', o.clientName!),
+                    if (o.taxId != null && o.taxId!.isNotEmpty)
+                      _specRow('Documento / RIF', o.taxId!),
+                    const SizedBox(height: 8),
+                  ],
+                  _specRow('Vehículo', '${o.brand ?? widget.vehicle.brand ?? ''} ${o.model ?? widget.vehicle.model ?? ''}'.trim()),
+                  _specRow('Placa / Matrícula', o.licensePlate ?? widget.vehicle.licensePlate),
+                  if (o.assignedMechanic != null && o.assignedMechanic!.isNotEmpty)
+                    _specRow('Mecánico / Latonero', o.assignedMechanic!),
+                  if (o.entryDate != null && o.entryDate!.isNotEmpty)
+                    _specRow('Fecha de Entrada', o.entryDate!.split('T')[0]),
+                  const SizedBox(height: 16),
+                  if (o.workPerformed != null && o.workPerformed!.isNotEmpty) ...[
+                    const Text(
+                      'Trabajos Realizados / Reparación',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Text(
+                        o.workPerformed!,
+                        style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B), height: 1.4),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Costo Estimado / Total',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+                      ),
+                      Text(
+                        '\$${o.totalCost.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF2563EB),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }

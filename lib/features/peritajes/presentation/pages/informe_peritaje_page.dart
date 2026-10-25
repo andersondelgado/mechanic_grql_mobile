@@ -134,6 +134,14 @@ class _InformePeritajePageState extends ConsumerState<InformePeritajePage> {
           await client.savePeritajeSignature(
             _currentPeritaje.id!,
             signatureBytesToBase64(bytes),
+            additionalData: {
+              if (_currentPeritaje.vehiclesFkId.isNotEmpty) 'vehicles_fk_id': _currentPeritaje.vehiclesFkId,
+              if (_currentPeritaje.clientsFkId != null) 'clients_fk_id': _currentPeritaje.clientsFkId,
+              if (_currentPeritaje.employeesFkId != null) 'employees_fk_id': _currentPeritaje.employeesFkId,
+              'inspection_type': _currentPeritaje.inspectionType,
+              'inspection_date': _currentPeritaje.inspectionDate,
+              'item_name': _currentPeritaje.itemName,
+            },
           );
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(

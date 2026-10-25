@@ -153,12 +153,20 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage> {
         );
       });
 
-      if (_peritaje!.id != null) {
+      if (_peritaje!.id != null && _peritaje!.id!.isNotEmpty) {
         try {
           final clientApi = ref.read(apiClientProvider);
           await clientApi.savePeritajeSignature(
             _peritaje!.id!,
             signatureBytesToBase64(bytes),
+            additionalData: {
+              if (_peritaje!.vehiclesFkId.isNotEmpty) 'vehicles_fk_id': _peritaje!.vehiclesFkId,
+              if (_peritaje!.clientsFkId != null) 'clients_fk_id': _peritaje!.clientsFkId,
+              if (_peritaje!.employeesFkId != null) 'employees_fk_id': _peritaje!.employeesFkId,
+              'inspection_type': _peritaje!.inspectionType,
+              'inspection_date': _peritaje!.inspectionDate,
+              'item_name': _peritaje!.itemName,
+            },
           );
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -168,7 +176,25 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage> {
               ),
             );
           }
-        } catch (_) {}
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Inconveniente al sincronizar firma: $e'),
+                backgroundColor: AppColors.danger,
+              ),
+            );
+          }
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Firma guardada localmente (sin ID de peritaje en servidor).'),
+              backgroundColor: AppColors.warning,
+            ),
+          );
+        }
       }
     }
   }
@@ -192,7 +218,7 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage> {
         );
       });
 
-      if (_recepcion!.id != null) {
+      if (_recepcion!.id != null && _recepcion!.id!.isNotEmpty) {
         try {
           final clientApi = ref.read(apiClientProvider);
           await clientApi.saveRecepcionSignature(
@@ -207,7 +233,25 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage> {
               ),
             );
           }
-        } catch (_) {}
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Inconveniente al sincronizar firma: $e'),
+                backgroundColor: AppColors.danger,
+              ),
+            );
+          }
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Firma guardada localmente (sin ID de recepción en servidor).'),
+              backgroundColor: AppColors.warning,
+            ),
+          );
+        }
       }
     }
   }

@@ -448,13 +448,19 @@ class ApiClient {
   }
 
   /// Guardar la firma digital del cliente en peritaje
-  Future<dynamic> savePeritajeSignature(String peritajeId, String signatureBase64) async {
+  Future<dynamic> savePeritajeSignature(
+    String peritajeId,
+    String signatureBase64, {
+    Map<String, dynamic>? additionalData,
+  }) async {
     final now = DateTime.now().toIso8601String();
-    return updateEntity('GestionTallerProd_inspection_cards', peritajeId, {
+    final payload = <String, dynamic>{
+      ...?additionalData,
       'client_signature': signatureBase64,
       'client_signature_date': now,
       'status': 'completado',
-    });
+    };
+    return updateEntity('GestionTallerProd_inspection_cards', peritajeId, payload);
   }
 
   /// Guardar la firma digital del cliente en recepción

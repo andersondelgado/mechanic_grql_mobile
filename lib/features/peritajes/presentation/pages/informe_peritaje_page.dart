@@ -428,7 +428,7 @@ class _InformePeritajePageState extends ConsumerState<InformePeritajePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
                 Text(
-                  'TALLER INTEGRALE\$ 360 GARAGE C.A.',
+                  'TALLER INTEGRAL 360 GARAGE C.A.',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w900,

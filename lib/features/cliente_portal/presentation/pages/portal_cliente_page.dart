@@ -1177,7 +1177,7 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: const [
                               Text(
-                                'TALLER INTEGRALE\$ 360 GARAGE C.A.',
+                                'TALLER INTEGRAL 360 GARAGE C.A.',
                                 style: TextStyle(
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w900,

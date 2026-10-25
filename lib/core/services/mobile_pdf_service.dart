@@ -114,7 +114,7 @@ class MobilePdfService {
                           crossAxisAlignment: pw.CrossAxisAlignment.start,
                           children: [
                             pw.Text(
-                              'TALLER INTEGRALE\$ 360 GARAGE C.A.',
+                              'TALLER INTEGRAL 360 GARAGE C.A.',
                               style: pw.TextStyle(
                                 fontSize: 13,
                                 fontWeight: pw.FontWeight.bold,
@@ -629,7 +629,7 @@ class MobilePdfService {
                           crossAxisAlignment: pw.CrossAxisAlignment.start,
                           children: [
                             pw.Text(
-                              'TALLER INTEGRALE\$ 360 GARAGE C.A.',
+                              'TALLER INTEGRAL 360 GARAGE C.A.',
                               style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey900),
                             ),
                             pw.Text('Mecánica General • Latonería y Pintura • Peritaje Computarizado',

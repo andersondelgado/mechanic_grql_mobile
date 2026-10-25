@@ -228,9 +228,12 @@ class _SignaturePadDialogState extends State<SignaturePadDialog> {
             const SizedBox(height: 16),
 
             // Acciones: Limpiar, Cancelar, Confirmar
-            Row(
-              children: [
-                OutlinedButton.icon(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isNarrow = constraints.maxWidth < 360;
+                final isVeryNarrow = constraints.maxWidth < 290;
+
+                final clearButton = OutlinedButton.icon(
                   onPressed: () => _controller.clear(),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.blueGrey.shade700,
@@ -238,22 +241,22 @@ class _SignaturePadDialogState extends State<SignaturePadDialog> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    padding: EdgeInsets.symmetric(horizontal: isNarrow ? 10 : 14, vertical: 12),
                   ),
                   icon: const Icon(Icons.refresh_rounded, size: 18),
                   label: const Text('Limpiar', style: TextStyle(fontSize: 13)),
-                ),
-                const Spacer(),
-                TextButton(
+                );
+
+                final cancelButton = TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.blueGrey.shade600,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    padding: EdgeInsets.symmetric(horizontal: isNarrow ? 8 : 14, vertical: 12),
                   ),
                   child: const Text('Cancelar', style: TextStyle(fontSize: 13)),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
+                );
+
+                final confirmButton = ElevatedButton.icon(
                   onPressed: _handleConfirm,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
@@ -261,16 +264,43 @@ class _SignaturePadDialogState extends State<SignaturePadDialog> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    padding: EdgeInsets.symmetric(horizontal: isNarrow ? 12 : 18, vertical: 12),
                     elevation: 2,
                   ),
                   icon: const Icon(Icons.check_circle_outline, size: 18),
-                  label: const Text(
-                    'Confirmar Firma',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                  label: Text(
+                    isNarrow ? 'Confirmar' : 'Confirmar Firma',
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                   ),
-                ),
-              ],
+                );
+
+                if (isVeryNarrow) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(child: cancelButton),
+                          const SizedBox(width: 8),
+                          Expanded(child: confirmButton),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      clearButton,
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    clearButton,
+                    const Spacer(),
+                    cancelButton,
+                    const SizedBox(width: 8),
+                    confirmButton,
+                  ],
+                );
+              },
             ),
           ],
         ),

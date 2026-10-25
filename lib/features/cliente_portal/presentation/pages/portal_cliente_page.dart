@@ -1167,55 +1167,60 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.04),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
+                      Container(
+                        width: 44,
+                        height: 44,
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
                             ),
-                            child: Image.asset(
-                              'assets/images/logo-taller-360.png',
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Text(
-                                'TALLER INTEGRAL 360 GARAGE C.A.',
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFF0F172A),
-                                ),
-                              ),
-                              Text(
-                                'MECÁNICA GENERAL • LATONERÍA Y PINTURA',
-                                style: TextStyle(fontSize: 9.5, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
-                              ),
-                              Text(
-                                'RIF: J-50123456-7 • Telf: (0212) 555-0360',
-                                style: TextStyle(fontSize: 9, color: Color(0xFF94A3B8)),
-                              ),
-                            ],
-                          ),
-                        ],
+                          ],
+                        ),
+                        child: Image.asset(
+                          'assets/images/logo-taller-360.png',
+                          fit: BoxFit.contain,
+                        ),
                       ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              'TALLER INTEGRAL 360 GARAGE C.A.',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                            Text(
+                              'MECÁNICA GENERAL • LATONERÍA Y PINTURA',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 9.5, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                            ),
+                            Text(
+                              'RIF: J-50123456-7 • Telf: (0212) 555-0360',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 9, color: Color(0xFF94A3B8)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(

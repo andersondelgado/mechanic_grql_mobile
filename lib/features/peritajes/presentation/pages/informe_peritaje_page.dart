@@ -617,40 +617,11 @@ class _InformePeritajePageState extends ConsumerState<InformePeritajePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header IA
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF7E22CE),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.psychology_rounded, color: Colors.white, size: 18),
-                  ),
-                  const SizedBox(width: 8),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        'EVALUACIÓN PERICIAL CON IA GEMINI',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF581C87),
-                        ),
-                      ),
-                      Text(
-                        'Diagnóstico computarizado de daños en carrocería y mecánica',
-                        style: TextStyle(fontSize: 10, color: Color(0xFF7E22CE)),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              Row(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final badges = Wrap(
+                spacing: 6,
+                runSpacing: 4,
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -667,8 +638,7 @@ class _InformePeritajePageState extends ConsumerState<InformePeritajePage> {
                       ),
                     ),
                   ),
-                  if (analysis?.confidenceScore != null) ...[
-                    const SizedBox(width: 6),
+                  if (analysis?.confidenceScore != null)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
@@ -684,10 +654,94 @@ class _InformePeritajePageState extends ConsumerState<InformePeritajePage> {
                         ),
                       ),
                     ),
-                  ],
                 ],
-              ),
-            ],
+              );
+
+              if (constraints.maxWidth < 520) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF7E22CE),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.psychology_rounded, color: Colors.white, size: 18),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'EVALUACIÓN PERICIAL CON IA GEMINI',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF581C87),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'Diagnóstico computarizado de daños en carrocería y mecánica',
+                            style: TextStyle(fontSize: 10, color: Color(0xFF7E22CE)),
+                          ),
+                          const SizedBox(height: 8),
+                          badges,
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              }
+
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF7E22CE),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.psychology_rounded, color: Colors.white, size: 18),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'EVALUACIÓN PERICIAL CON IA GEMINI',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF581C87),
+                                ),
+                              ),
+                              Text(
+                                'Diagnóstico computarizado de daños en carrocería y mecánica',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 10, color: Color(0xFF7E22CE)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  badges,
+                ],
+              );
+            },
           ),
           const SizedBox(height: 12),
 

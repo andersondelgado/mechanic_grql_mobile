@@ -308,21 +308,34 @@ class ApiClient {
       );
       final response = await workflowJson(request: request);
 
-      // Intentar extraer stats de múltiples patrones de respuesta
+      // Intentar extraer stats de múltiples patrones de respuesta (espejo de stats.service.ts del web)
       final tableData = response['GestionTallerProd_stats'];
       if (tableData is Map) {
-        final result =
-            (tableData['custom_function'] as Map?) ??
-            (tableData['customFunction'] as Map?) ??
-            (tableData['data'] as Map?) ??
-            tableData;
-        return result.cast<String, dynamic>();
+        final cf = tableData['custom_function'] ?? tableData['customFunction'];
+        if (cf is Map && cf['data'] is Map) {
+          return (cf['data'] as Map).cast<String, dynamic>();
+        }
+        if (tableData['data'] is Map) {
+          final d = tableData['data'] as Map;
+          if (d['data'] is Map) {
+            return (d['data'] as Map).cast<String, dynamic>();
+          }
+          return d.cast<String, dynamic>();
+        }
+        if (cf is Map) {
+          return cf.cast<String, dynamic>();
+        }
+        return tableData.cast<String, dynamic>();
       }
       if (response['data'] is Map) {
-        return (response['data'] as Map).cast<String, dynamic>();
+        final d = response['data'] as Map;
+        if (d['data'] is Map) {
+          return (d['data'] as Map).cast<String, dynamic>();
+        }
+        return d.cast<String, dynamic>();
       }
       return null;
-    } catch (_) {
+    } catch (e) {
       return null;
     }
   }

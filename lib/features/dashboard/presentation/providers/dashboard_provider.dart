@@ -2,6 +2,35 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/providers.dart';
 
+class MonthlyBreakdownModel {
+  final String month;
+  final double income;
+  final double expenses;
+  final double balance;
+
+  const MonthlyBreakdownModel({
+    this.month = '',
+    this.income = 0.0,
+    this.expenses = 0.0,
+    this.balance = 0.0,
+  });
+
+  factory MonthlyBreakdownModel.fromJson(Map<String, dynamic> json) {
+    double toDouble(dynamic val) {
+      if (val is num) return val.toDouble();
+      if (val is String) return double.tryParse(val) ?? 0.0;
+      return 0.0;
+    }
+
+    return MonthlyBreakdownModel(
+      month: (json['month'] ?? '').toString(),
+      income: toDouble(json['income']),
+      expenses: toDouble(json['expenses']),
+      balance: toDouble(json['balance']),
+    );
+  }
+}
+
 class DashboardStatsModel {
   final int totalClients;
   final int totalVehicles;
@@ -15,6 +44,7 @@ class DashboardStatsModel {
   final double totalBalanceAll;
   final double accountsReceivableTotal;
   final double accountsPayableTotal;
+  final List<MonthlyBreakdownModel> monthlyBreakdown;
 
   const DashboardStatsModel({
     this.totalClients = 0,
@@ -29,9 +59,14 @@ class DashboardStatsModel {
     this.totalBalanceAll = 0.0,
     this.accountsReceivableTotal = 0.0,
     this.accountsPayableTotal = 0.0,
+    this.monthlyBreakdown = const [],
   });
 
-  factory DashboardStatsModel.fromJson(Map<String, dynamic> json) {
+  factory DashboardStatsModel.fromJson(Map<String, dynamic> rawJson) {
+    final json = (rawJson['data'] is Map)
+        ? (rawJson['data'] as Map).cast<String, dynamic>()
+        : rawJson;
+
     int toInt(dynamic val) {
       if (val is num) return val.toInt();
       if (val is String) return int.tryParse(val) ?? 0;
@@ -42,6 +77,18 @@ class DashboardStatsModel {
       if (val is num) return val.toDouble();
       if (val is String) return double.tryParse(val) ?? 0.0;
       return 0.0;
+    }
+
+    final rawMonthly = json['monthly_breakdown'];
+    final List<MonthlyBreakdownModel> breakdownList = [];
+    if (rawMonthly is List) {
+      for (final item in rawMonthly) {
+        if (item is Map) {
+          breakdownList.add(
+            MonthlyBreakdownModel.fromJson(item.cast<String, dynamic>()),
+          );
+        }
+      }
     }
 
     return DashboardStatsModel(
@@ -57,6 +104,7 @@ class DashboardStatsModel {
       totalBalanceAll: toDouble(json['total_balance_all']),
       accountsReceivableTotal: toDouble(json['accounts_receivable_total']),
       accountsPayableTotal: toDouble(json['accounts_payable_total']),
+      monthlyBreakdown: breakdownList,
     );
   }
 }

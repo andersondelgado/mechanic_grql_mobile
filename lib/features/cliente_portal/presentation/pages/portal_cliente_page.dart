@@ -27,9 +27,9 @@ class PortalClientePage extends ConsumerStatefulWidget {
   ConsumerState<PortalClientePage> createState() => _PortalClientePageState();
 }
 
-class _PortalClientePageState extends ConsumerState<PortalClientePage>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _PortalClientePageState extends ConsumerState<PortalClientePage> {
+  late final PageController _pageController;
+  int _selectedIndex = 0;
   bool _isLoading = true;
   String? _error;
 
@@ -43,14 +43,26 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _pageController = PageController(initialPage: 0);
     _loadVehicleRecords();
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
+    _pageController.dispose();
     super.dispose();
+  }
+
+  void _goToPage(int index) {
+    if (_selectedIndex == index) return;
+    setState(() => _selectedIndex = index);
+    if (_pageController.hasClients) {
+      _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeInOutCubic,
+      );
+    }
   }
 
   Uint8List? _parseSignature(String? sig) {
@@ -76,17 +88,18 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage>
 
     try {
       final clientApi = ref.read(apiClientProvider);
-      final vId = widget.vehicle.id;
+      final vId = widget.vehicle.id?.trim() ?? '';
+      final plate = widget.vehicle.licensePlate.trim();
 
-      if (vId == null || vId.isEmpty) {
-        throw Exception("ID de vehículo no válido");
+      if (vId.isEmpty && plate.isEmpty) {
+        throw Exception("ID o Placa de vehículo no válida");
       }
 
-      // Consultas en paralelo para rapidez
+      // Consultas en paralelo para rapidez (soporta tanto UUID como Placa)
       final results = await Future.wait([
-        clientApi.getRecepcionesForVehicle(vId),
-        clientApi.getPeritajesForVehicle(vId),
-        clientApi.getQuotesForVehicle(vId),
+        clientApi.getRecepcionesForVehicle(vId, licensePlate: plate),
+        clientApi.getPeritajesForVehicle(vId, licensePlate: plate),
+        clientApi.getQuotesForVehicle(vId, licensePlate: plate),
       ]);
 
       final recepcionesList = results[0];
@@ -264,53 +277,106 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage>
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        titleSpacing: 0,
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => context.go('/consulta-cliente'),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 16,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ),
+          ),
+        ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Portal del Conductor',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppColors.secondary,
+            Row(
+              children: [
+                const Text(
+                  'Portal del Conductor',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFFDE68A)),
+                  ),
+                  child: Text(
+                    widget.vehicle.licensePlate,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF92400E),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              clientName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.w500,
               ),
             ),
-            Text(
-              'Vehículo: ${widget.vehicle.licensePlate} • $clientName',
-              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-            ),
           ],
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.secondary),
-          onPressed: () => context.go('/consulta-cliente'),
-          tooltip: 'Cambiar de vehículo',
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.primary),
-            onPressed: _loadVehicleRecords,
-            tooltip: 'Actualizar estado',
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: _loadVehicleRecords,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFDBEAFE)),
+                  ),
+                  child: const Icon(
+                    Icons.refresh_rounded,
+                    size: 18,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: const Color(0xFF64748B),
-          indicatorColor: AppColors.primary,
-          indicatorWeight: 3,
-          isScrollable: true,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-          tabs: const [
-            Tab(icon: Icon(Icons.timeline_rounded, size: 18), text: 'Estado & Timeline'),
-            Tab(icon: Icon(Icons.psychology_rounded, size: 18), text: 'Informe Peritaje IA'),
-            Tab(icon: Icon(Icons.receipt_long_rounded, size: 18), text: 'Ficha Técnica Recepción'),
-            Tab(icon: Icon(Icons.request_quote_rounded, size: 18), text: 'Presupuesto'),
-          ],
-        ),
       ),
+      bottomNavigationBar: _buildModernBottomNav(),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : _error != null && _recepcion == null && _peritaje == null
@@ -337,22 +403,276 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage>
                     ),
                   ),
                 )
-              : TabBarView(
-                  controller: _tabController,
+              : Column(
                   children: [
-                // Tab 1: Estado del Vehículo & Timeline
-                _buildTimelineTab(currentStep),
+                    _buildTopCapsuleSelector(),
+                    Expanded(
+                      child: PageView(
+                        controller: _pageController,
+                        physics: const BouncingScrollPhysics(),
+                        onPageChanged: (index) {
+                          setState(() => _selectedIndex = index);
+                        },
+                        children: [
+                          // Tab 1: Estado del Vehículo & Timeline
+                          _buildTimelineTab(currentStep),
 
-                // Tab 2: Informe de Peritaje con IA Gemini
-                _buildPeritajeTab(),
+                          // Tab 2: Ficha Técnica de Recepción
+                          _buildRecepcionTab(),
 
-                // Tab 3: Ficha Técnica de Recepción
-                _buildRecepcionTab(),
+                          // Tab 3: Informe de Peritaje con IA Gemini
+                          _buildPeritajeTab(),
 
-                // Tab 4: Presupuesto & Costos
-                _buildPresupuestoTab(),
-              ],
+                          // Tab 4: Presupuesto & Costos
+                          _buildPresupuestoTab(),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // SELECTOR SUPERIOR: CÁPSULAS / PILLS MODERNAS
+  // ──────────────────────────────────────────────────────────────────────────
+  Widget _buildTopCapsuleSelector() {
+    final items = [
+      {
+        'title': 'Progreso',
+        'icon': Icons.timeline_rounded,
+        'badge': null,
+      },
+      {
+        'title': 'Recepción',
+        'icon': Icons.assignment_turned_in_rounded,
+        'badge': _recepcion != null ? 'Listo' : null,
+        'badgeColor': const Color(0xFF10B981),
+      },
+      {
+        'title': 'Peritaje IA',
+        'icon': Icons.psychology_rounded,
+        'badge': _peritaje != null ? 'IA' : null,
+        'badgeColor': const Color(0xFF8B5CF6),
+      },
+      {
+        'title': 'Presupuesto',
+        'icon': Icons.request_quote_rounded,
+        'badge': _cotizacion != null ? '\$' : null,
+        'badgeColor': const Color(0xFF059669),
+      },
+    ];
+
+    return Container(
+      height: 52,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1.2),
+        ),
+      ),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        itemCount: items.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final item = items[index];
+          final isSelected = _selectedIndex == index;
+          final badge = item['badge'] as String?;
+          final badgeColor = (item['badgeColor'] as Color?) ?? AppColors.primary;
+
+          return Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _goToPage(index),
+              borderRadius: BorderRadius.circular(20),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeInOut,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primary : const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected ? AppColors.primary : const Color(0xFFE2E8F0),
+                    width: 1,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.25),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      item['icon'] as IconData,
+                      size: 16,
+                      color: isSelected ? Colors.white : const Color(0xFF64748B),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      item['title'] as String,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                        color: isSelected ? Colors.white : const Color(0xFF475569),
+                      ),
+                    ),
+                    if (badge != null) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? Colors.white.withValues(alpha: 0.25)
+                              : badgeColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          badge,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: isSelected ? Colors.white : badgeColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // BARRA DE NAVEGACIÓN INFERIOR ERGONÓMICA
+  // ──────────────────────────────────────────────────────────────────────────
+  Widget _buildModernBottomNav() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
+          ),
+        ],
+        border: const Border(
+          top: BorderSide(color: Color(0xFFF1F5F9), width: 1.2),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildBottomNavItem(
+                index: 0,
+                icon: Icons.timeline_rounded,
+                label: 'Progreso',
+              ),
+              _buildBottomNavItem(
+                index: 1,
+                icon: Icons.assignment_turned_in_rounded,
+                label: 'Recepción',
+                isCompleted: _recepcion != null,
+              ),
+              _buildBottomNavItem(
+                index: 2,
+                icon: Icons.psychology_rounded,
+                label: 'Peritaje IA',
+                isCompleted: _peritaje != null,
+              ),
+              _buildBottomNavItem(
+                index: 3,
+                icon: Icons.request_quote_rounded,
+                label: 'Presupuesto',
+                isCompleted: _cotizacion != null,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNavItem({
+    required int index,
+    required IconData icon,
+    required String label,
+    bool isCompleted = false,
+  }) {
+    final isSelected = _selectedIndex == index;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _goToPage(index),
+        borderRadius: BorderRadius.circular(16),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: EdgeInsets.symmetric(
+            horizontal: isSelected ? 14 : 10,
+            vertical: 6,
+          ),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFFEFF6FF) : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(
+                    icon,
+                    size: 22,
+                    color: isSelected ? AppColors.primary : const Color(0xFF94A3B8),
+                  ),
+                  if (isCompleted)
+                    Positioned(
+                      top: -2,
+                      right: -4,
+                      child: Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: AppColors.success,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? AppColors.primary : const Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -378,6 +698,10 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage>
           children: [
             // Vehicle Hero Card
             _buildVehicleHeroCard(),
+            const SizedBox(height: 16),
+
+            // Acceso Rápido a Módulos y Documentos
+            _buildQuickAccessCards(),
             const SizedBox(height: 16),
 
             // Card del Progreso
@@ -499,27 +823,15 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage>
   // ──────────────────────────────────────────────────────────────────────────
   Widget _buildPeritajeTab() {
     if (_peritaje == null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(Icons.psychology_outlined, size: 64, color: Colors.grey),
-              SizedBox(height: 12),
-              Text(
-                'Sin peritaje técnico registrado aún',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
-              ),
-              SizedBox(height: 6),
-              Text(
-                'El equipo técnico del taller generará la evaluación con IA Gemini próximamente.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-              ),
-            ],
-          ),
-        ),
+      return _buildEmptyState(
+        icon: Icons.psychology_outlined,
+        iconColor: const Color(0xFF7E22CE),
+        bgColor: const Color(0xFFFAF5FF),
+        title: 'Sin peritaje técnico registrado aún',
+        message:
+            'El equipo técnico del taller generará la evaluación multimodal con IA Gemini próximamente para inspeccionar daños en carrocería.',
+        actionLabel: 'Ver Ficha de Recepción',
+        onAction: () => _goToPage(1),
       );
     }
 
@@ -790,27 +1102,15 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage>
   // ──────────────────────────────────────────────────────────────────────────
   Widget _buildRecepcionTab() {
     if (_recepcion == null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(Icons.assignment_outlined, size: 64, color: Colors.grey),
-              SizedBox(height: 12),
-              Text(
-                'Sin ficha de recepción activa',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
-              ),
-              SizedBox(height: 6),
-              Text(
-                'No se ha registrado una orden de entrada para este vehículo.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-              ),
-            ],
-          ),
-        ),
+      return _buildEmptyState(
+        icon: Icons.assignment_outlined,
+        iconColor: const Color(0xFF0284C7),
+        bgColor: const Color(0xFFF0F9FF),
+        title: 'Sin ficha de recepción activa',
+        message:
+            'No se ha registrado una orden de entrada o inventario oficial para este vehículo en el sistema.',
+        actionLabel: 'Ver Estado del Progreso',
+        onAction: () => _goToPage(0),
       );
     }
 
@@ -818,12 +1118,22 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage>
     final hasSignature = _recepcionSignatureBytes != null ||
         (rec.clientSignature != null && rec.clientSignature!.isNotEmpty);
 
+    final clientName = rec.ownerName ?? widget.client?.nombre ?? widget.vehicle.clientName ?? 'Cliente';
+    final clientTaxId = rec.ownerTaxId ?? widget.client?.ci ?? '-';
+    final clientPhone = rec.phone ?? widget.client?.telefono ?? '-';
+    final clientAddress = rec.address ?? widget.client?.direccion ?? 'EN SITIO';
+
+    final vehiclePlate = rec.licensePlate ?? widget.vehicle.licensePlate;
+    final vehicleBrandModel = '${rec.brand ?? widget.vehicle.brand ?? ''} ${rec.model ?? widget.vehicle.model ?? ''}'.trim();
+    final vehicleColor = rec.color ?? widget.vehicle.color ?? '-';
+    final vehicleMileage = rec.mileage ?? '-';
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Tarjeta de Recepción
+          // 1. Encabezado Oficial del Taller
           Card(
             elevation: 0,
             shape: RoundedRectangleBorder(
@@ -842,35 +1152,52 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage>
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(8),
+                            width: 44,
+                            height: 44,
+                            padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF0284C7),
-                              borderRadius: BorderRadius.circular(10),
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
-                            child: const Icon(Icons.assignment_turned_in_rounded, color: Colors.white, size: 20),
+                            child: Image.asset(
+                              'assets/images/logo-taller-360.png',
+                              fit: BoxFit.contain,
+                            ),
                           ),
                           const SizedBox(width: 10),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+                            children: const [
                               Text(
-                                rec.code,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0369A1),
+                                'TALLER INTEGRALE\$ 360 GARAGE C.A.',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF0F172A),
                                 ),
                               ),
-                              const Text(
-                                'Ficha Oficial de Recepción',
-                                style: TextStyle(fontSize: 11, color: Color(0xFF0284C7)),
+                              Text(
+                                'MECÁNICA GENERAL • LATONERÍA Y PINTURA',
+                                style: TextStyle(fontSize: 9.5, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                              ),
+                              Text(
+                                'RIF: J-50123456-7 • Telf: (0212) 555-0360',
+                                style: TextStyle(fontSize: 9, color: Color(0xFF94A3B8)),
                               ),
                             ],
                           ),
                         ],
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: rec.status == 'completed' || rec.status == 'completado'
                               ? AppColors.success
@@ -888,42 +1215,262 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage>
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-
-                  _specRow('Fecha de Entrada:', rec.entryDate ?? '-'),
-                  if (rec.exitDate != null)
-                    _specRow('Fecha Est. Entrega:', rec.exitDate!),
-                  _specRow('Nivel Combustible:', rec.fuelLevel ?? '1/2'),
-                  _specRow('Kilometraje:', '${rec.mileage ?? '-'} km'),
-                  const SizedBox(height: 10),
-
-                  if (rec.reasonForEntry != null && rec.reasonForEntry!.isNotEmpty) ...[
-                    const Text(
-                      'Motivo de Entrada:',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                    const SizedBox(height: 4),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFBAE6FD)),
-                      ),
-                      child: Text(
-                        rec.reasonForEntry!,
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF1E293B)),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'FICHA DE CONTROL E INSPECCIÓN DE RECEPCIÓN DE VEHÍCULO',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: 0.5,
                       ),
                     ),
-                  ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFBAE6FD)),
+                        ),
+                        child: Text(
+                          'N° ${rec.code}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF0369A1),
+                          ),
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'Fecha Entrada: ${rec.entryDate ?? '-'}',
+                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                          ),
+                          if (rec.exitDate != null)
+                            Text(
+                              'Fecha Est. Salida: ${rec.exitDate}',
+                              style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
           ),
+          const SizedBox(height: 14),
+
+          // 2. Datos del Propietario / Cliente y Vehículo
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+            color: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'DATOS DEL PROPIETARIO / CLIENTE',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0F172A), letterSpacing: 0.3),
+                  ),
+                  const Divider(color: Color(0xFFF1F5F9), height: 12),
+                  _specRow('Nombre/Razón:', clientName),
+                  _specRow('C.I. / RIF:', clientTaxId),
+                  _specRow('Teléfono:', clientPhone),
+                  _specRow('Dirección:', clientAddress),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'DATOS DEL VEHÍCULO',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0F172A), letterSpacing: 0.3),
+                  ),
+                  const Divider(color: Color(0xFFF1F5F9), height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Placa:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFFDE68A)),
+                        ),
+                        child: Text(
+                          vehiclePlate,
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF92400E)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  _specRow('Marca / Modelo:', vehicleBrandModel.isNotEmpty ? vehicleBrandModel : '-'),
+                  _specRow('Color:', vehicleColor),
+                  _specRow('Kilometraje:', '$vehicleMileage km'),
+                  if (rec.vin != null && rec.vin!.isNotEmpty)
+                    _specRow('VIN / Serial:', rec.vin!),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // 3. Custodia y Personal Responsable
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+            color: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'CUSTODIA Y PERSONAL RESPONSABLE',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0F172A), letterSpacing: 0.3),
+                  ),
+                  const Divider(color: Color(0xFFF1F5F9), height: 12),
+                  _specRow('Recibido por:', rec.receivedBy != null && rec.receivedBy!.isNotEmpty ? rec.receivedBy! : '-'),
+                  _specRow('Entregado por:', rec.deliveredBy != null && rec.deliveredBy!.isNotEmpty ? rec.deliveredBy! : clientName),
+                  _specRow('Técnico Asignado:', rec.assignedTechnician != null && rec.assignedTechnician!.isNotEmpty ? rec.assignedTechnician! : 'YEISON TORRES'),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // 4. Nivel de Combustible & Motivo de Ingreso
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+            color: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildFuelGauge(rec.fuelLevel),
+                  const SizedBox(height: 14),
+                  const Text(
+                    'MOTIVO DE INGRESO / FALLAS REPORTADAS',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0F172A), letterSpacing: 0.3),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Text(
+                      rec.reasonForEntry != null && rec.reasonForEntry!.isNotEmpty
+                          ? rec.reasonForEntry!
+                          : (rec.observations != null && rec.observations!.isNotEmpty
+                              ? rec.observations!
+                              : 'Ingreso regular a taller para revisión.'),
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF1E293B), height: 1.4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // 5. Diagrama de Carrocería y Daños
+          _buildDamagePointsSection(rec.damagePoints),
+          const SizedBox(height: 14),
+
+          // 6. Inventario de Componentes y Estado Físico (Checklist)
+          _buildChecklistSection(
+            title: 'Revisión Externa (Carrocería / Cristales / Luces / Ruedas)',
+            items: rec.checklistExternal,
+            emptyMessage: 'Todos los componentes externos verificados OK.',
+          ),
+          const SizedBox(height: 14),
+
+          _buildChecklistSection(
+            title: 'Revisión Interna (Habitáculo / Mandos / Auxilio)',
+            items: rec.checklistInternal,
+            emptyMessage: 'Todos los componentes internos verificados OK.',
+          ),
+          const SizedBox(height: 14),
+
+          // 7. Servicios y Reparaciones Aprobadas (si existen)
+          if (rec.authorizedServices != null && rec.authorizedServices!.isNotEmpty) ...[
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+              color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'SERVICIOS Y REPARACIONES APROBADAS A REALIZAR',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0F172A), letterSpacing: 0.3),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      rec.authorizedServices!,
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF334155), height: 1.4),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+          ],
+
+          // 8. Cláusula Legal de Custodia
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: const Text(
+              'CLÁUSULA DE CUSTODIA Y CONFORMIDAD: El cliente autoriza los trabajos mencionados y los desplazamientos necesarios para pruebas mecánicas bajo su cuenta y riesgo. El taller no se hace responsable por pérdidas de objetos de valor o dinero no especificados en este reporte. Todo trabajo adicional no contemplado requerirá previa autorización.',
+              style: TextStyle(fontSize: 10, color: Color(0xFF64748B), height: 1.35),
+              textAlign: TextAlign.justify,
+            ),
+          ),
           const SizedBox(height: 16),
 
-          // Estado de Firma
+          // 9. Bloques de Firmas Digitales
           Card(
             elevation: 0,
             shape: RoundedRectangleBorder(
@@ -958,7 +1505,7 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage>
                             Text(
                               hasSignature
                                   ? 'Su firma certifica el estado en que entregó el vehículo al taller.'
-                                  : 'Firme para validar el inventario inicial del vehículo.',
+                                  : 'Firme para validar el inventario oficial del vehículo.',
                               style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
                             ),
                           ],
@@ -969,7 +1516,8 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage>
                   if (_recepcionSignatureBytes != null) ...[
                     const SizedBox(height: 10),
                     Container(
-                      height: 50,
+                      height: 56,
+                      width: double.infinity,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(8),
@@ -985,7 +1533,7 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage>
           ),
           const SizedBox(height: 16),
 
-          // Botones de Acción
+          // 10. Botones de Acción
           Row(
             children: [
               Expanded(
@@ -1034,27 +1582,15 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage>
   // ──────────────────────────────────────────────────────────────────────────
   Widget _buildPresupuestoTab() {
     if (_cotizacion == null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(Icons.request_quote_outlined, size: 64, color: Colors.grey),
-              SizedBox(height: 12),
-              Text(
-                'Sin presupuesto emitido por el momento',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
-              ),
-              SizedBox(height: 6),
-              Text(
-                'Una vez completado el peritaje técnico, se generará la cotización de repuestos y mano de obra.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-              ),
-            ],
-          ),
-        ),
+      return _buildEmptyState(
+        icon: Icons.request_quote_outlined,
+        iconColor: const Color(0xFF059669),
+        bgColor: const Color(0xFFECFDF5),
+        title: 'Sin presupuesto emitido por el momento',
+        message:
+            'Una vez completado el peritaje técnico, el taller generará la cotización de repuestos y mano de obra para su aprobación.',
+        actionLabel: 'Ver Informe Peritaje IA',
+        onAction: () => _goToPage(2),
       );
     }
 
@@ -1276,6 +1812,551 @@ class _PortalClientePageState extends ConsumerState<PortalClientePage>
           Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
           Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
         ],
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Accesos Rápidos a Módulos y Documentos (Dashboard)
+  // ──────────────────────────────────────────────────────────────────────────
+  Widget _buildQuickAccessCards() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: const [
+              Text(
+                'Documentos & Evaluaciones',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              Text(
+                'Toca para explorar',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF94A3B8),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            // Card 1: Recepción
+            Expanded(
+              child: _buildQuickCardItem(
+                title: 'Recepción',
+                subtitle: _recepcion != null ? 'Ficha Lista ✓' : 'Pendiente',
+                icon: Icons.assignment_turned_in_rounded,
+                color: const Color(0xFF0284C7),
+                bgColor: const Color(0xFFF0F9FF),
+                onTap: () => _goToPage(1),
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Card 2: Peritaje IA
+            Expanded(
+              child: _buildQuickCardItem(
+                title: 'Peritaje IA',
+                subtitle: _peritaje != null ? 'IA Lista ✓' : 'En espera',
+                icon: Icons.psychology_rounded,
+                color: const Color(0xFF7E22CE),
+                bgColor: const Color(0xFFFAF5FF),
+                onTap: () => _goToPage(2),
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Card 3: Presupuesto
+            Expanded(
+              child: _buildQuickCardItem(
+                title: 'Presupuesto',
+                subtitle: _cotizacion != null
+                    ? '\$${_cotizacion!.total.toStringAsFixed(2)}'
+                    : 'En revisión',
+                icon: Icons.request_quote_rounded,
+                color: const Color(0xFF059669),
+                bgColor: const Color(0xFFECFDF5),
+                onTap: () => _goToPage(3),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickCardItem({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required Color bgColor,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: color.withValues(alpha: 0.25), width: 1.2),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: color, size: 18),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Estado Vacío Moderno y Elegante
+  // ──────────────────────────────────────────────────────────────────────────
+  Widget _buildEmptyState({
+    required IconData icon,
+    required Color iconColor,
+    required Color bgColor,
+    required String title,
+    required String message,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(28),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 48, color: iconColor),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF64748B),
+                  height: 1.4,
+                ),
+              ),
+              if (actionLabel != null && onAction != null) ...[
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: onAction,
+                  icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                  label: Text(actionLabel),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: iconColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Medidor Gráfico de Combustible
+  // ──────────────────────────────────────────────────────────────────────────
+  Widget _buildFuelGauge(String? fuelLevel) {
+    final fuel = fuelLevel?.trim() ?? '1/2';
+    double percentage = 0.5;
+    Color barColor = const Color(0xFF10B981);
+    if (fuel.contains('Reserva') || fuel == 'E') {
+      percentage = 0.1;
+      barColor = const Color(0xFFEF4444);
+    } else if (fuel.contains('1/4')) {
+      percentage = 0.25;
+      barColor = const Color(0xFFF59E0B);
+    } else if (fuel.contains('1/2')) {
+      percentage = 0.50;
+      barColor = const Color(0xFF10B981);
+    } else if (fuel.contains('3/4')) {
+      percentage = 0.75;
+      barColor = const Color(0xFF059669);
+    } else if (fuel.contains('F') || fuel.contains('Lleno') || fuel == '1/1' || fuel == '1') {
+      percentage = 1.0;
+      barColor = const Color(0xFF2563EB);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Nivel de Combustible',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFBFDBFE)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.local_gas_station_rounded, size: 14, color: Color(0xFF2563EB)),
+                  const SizedBox(width: 4),
+                  Text(
+                    fuel,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1D4ED8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: Container(
+            height: 10,
+            width: double.infinity,
+            color: const Color(0xFFE2E8F0),
+            child: FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: percentage,
+              child: Container(
+                color: barColor,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: const [
+            Text('E (Reserva)', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
+            Text('1/4', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
+            Text('1/2', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
+            Text('3/4', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
+            Text('F (Lleno)', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Diagrama de Estado de Carrocería y Daños
+  // ──────────────────────────────────────────────────────────────────────────
+  Widget _buildDamagePointsSection(List<Map<String, dynamic>> damagePoints) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFFE2E8F0)),
+      ),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    'DIAGRAMA DE CARROCERÍA Y DAÑOS (${damagePoints.length} MARCAS)',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ),
+                Wrap(
+                  spacing: 4,
+                  children: const [
+                    Text('R: Rayón', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFFD97706))),
+                    Text('G: Golpe', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFFDC2626))),
+                    Text('Q: Quebrado', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF7C3AED))),
+                    Text('F: Falta', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            if (damagePoints.isNotEmpty) ...[
+              Column(
+                children: damagePoints.map((pt) {
+                  final type = pt['type']?.toString().toLowerCase() ?? 'scratch';
+                  Color color = const Color(0xFFD97706);
+                  String letter = 'R';
+                  if (type == 'dent' || type == 'golpe') {
+                    color = const Color(0xFFDC2626);
+                    letter = 'G';
+                  } else if (type == 'broken' || type == 'quebrado') {
+                    color = const Color(0xFF7C3AED);
+                    letter = 'Q';
+                  } else if (type == 'missing' || type == 'falta') {
+                    color = const Color(0xFF2563EB);
+                    letter = 'F';
+                  }
+
+                  final view = pt['view']?.toString() ?? 'front';
+                  final notes = pt['notes']?.toString() ?? 'Detalle no especificado';
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 22,
+                          height: 22,
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            letter,
+                            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Vista $view:'.toUpperCase(),
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            notes,
+                            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ] else ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: const Text(
+                  'No se registraron daños visuales. El vehículo se recibe con carrocería en buen estado general.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Color(0xFF64748B)),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Inventario de Componentes y Estado Físico
+  // ──────────────────────────────────────────────────────────────────────────
+  Widget _buildChecklistSection({
+    required String title,
+    required List<Map<String, dynamic>> items,
+    required String emptyMessage,
+  }) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFFE2E8F0)),
+      ),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title.toUpperCase(),
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+                letterSpacing: 0.3,
+              ),
+            ),
+            const SizedBox(height: 10),
+            if (items.isNotEmpty) ...[
+              for (final item in items) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item['name']?.toString() ?? 'Componente',
+                          style: const TextStyle(fontSize: 11.5, color: Color(0xFF1E293B), fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (item['notes'] != null && item['notes'].toString().isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: Text(
+                                '(${item['notes']})',
+                                style: const TextStyle(fontSize: 10, color: Color(0xFFDC2626)),
+                              ),
+                            ),
+                          _buildStatusBadge(item['status']?.toString().toLowerCase()),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(color: Color(0xFFF1F5F9), height: 8),
+              ],
+            ] else ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  emptyMessage,
+                  style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Color(0xFF64748B)),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String? status) {
+    Color bg = const Color(0xFFE2E8F0);
+    Color text = const Color(0xFF475569);
+    String label = 'N/A';
+
+    if (status == 'ok' || status == 'bueno' || status == 'conforme') {
+      bg = const Color(0xFFDCFCE7);
+      text = const Color(0xFF166534);
+      label = 'OK';
+    } else if (status == 'bad' || status == 'mal' || status == 'dañado') {
+      bg = const Color(0xFFFEE2E2);
+      text = const Color(0xFF991B1B);
+      label = 'MAL';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: text),
       ),
     );
   }

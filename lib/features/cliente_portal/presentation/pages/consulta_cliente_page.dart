@@ -3,6 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/network/providers.dart';
+import '../../../../core/network/workflow_types.dart';
 import '../../../../models/vehiculo.dart';
 import '../../../../models/cliente.dart';
 
@@ -75,6 +76,7 @@ class _ConsultaClientePageState extends ConsumerState<ConsultaClientePage> {
         if (cliId != null && cliId.isNotEmpty) {
           final allVehs = await client.getEntity(
             'GestionTallerProd_vehicles',
+            query: WorkflowQuery(pagination: {'page': 1, 'size': 500}),
           );
           final clientVehs = allVehs.where((v) {
             if (v is! Map) return false;
@@ -87,6 +89,36 @@ class _ConsultaClientePageState extends ConsumerState<ConsultaClientePage> {
           }
         }
 
+        // Fallback: Si no se encontró en vehicles, buscar en recepciones
+        if (veh == null) {
+          final allReceipts = await client.getEntity(
+            'GestionTallerProd_vehicle_receipts',
+            query: WorkflowQuery(pagination: {'page': 1, 'size': 200}),
+          );
+          final cleanDoc = query.trim().toLowerCase().replaceAll('.', '').replaceAll('-', '');
+          for (final r in allReceipts) {
+            if (r is! Map) continue;
+            final rTax = (r['owner_tax_id'] ?? '').toString().trim().toLowerCase().replaceAll('.', '').replaceAll('-', '');
+            final rVehList = r['vehicles'];
+            if (rVehList is List && rVehList.isNotEmpty) {
+              final vMap = (rVehList.first as Map).cast<String, dynamic>();
+              final vFk = (vMap['clients_fk_id'] ?? '').toString();
+              if (vFk == cliId || (rTax.isNotEmpty && (rTax.contains(cleanDoc) || cleanDoc.contains(rTax)))) {
+                veh = Vehiculo.fromJson(vMap);
+                break;
+              }
+            }
+          }
+        }
+
+        if (veh == null) {
+          setState(() {
+            _errorMessage =
+                'El cliente "${cli.nombre}" no tiene vehículos asociados registrados en el sistema.';
+          });
+          return;
+        }
+
         if (mounted) {
           context.push('/portal-cliente', extra: {
             'vehicle': veh,
@@ -94,6 +126,60 @@ class _ConsultaClientePageState extends ConsumerState<ConsultaClientePage> {
           });
         }
         return;
+      }
+
+      // 3. Fallback: Buscar directamente en Fichas de Recepción
+      final allReceipts = await client.getEntity(
+        'GestionTallerProd_vehicle_receipts',
+        query: WorkflowQuery(pagination: {'page': 1, 'size': 200}),
+      );
+      final clean = query.trim().toUpperCase().replaceAll(' ', '').replaceAll('.', '').replaceAll('-', '');
+      for (final r in allReceipts) {
+        if (r is! Map) continue;
+        final plate = (r['license_plate'] ?? '').toString().trim().toUpperCase().replaceAll(' ', '').replaceAll('-', '');
+        final taxId = (r['owner_tax_id'] ?? '').toString().trim().toUpperCase().replaceAll(' ', '').replaceAll('.', '').replaceAll('-', '');
+        final ownerName = (r['owner_name'] ?? '').toString().trim().toUpperCase();
+
+        if ((plate.isNotEmpty && (plate.contains(clean) || clean.contains(plate))) ||
+            (taxId.isNotEmpty && (taxId.contains(clean) || clean.contains(taxId))) ||
+            (ownerName.isNotEmpty && ownerName.contains(clean))) {
+          Vehiculo? veh;
+          final rVehList = r['vehicles'];
+          if (rVehList is List && rVehList.isNotEmpty) {
+            veh = Vehiculo.fromJson((rVehList.first as Map).cast<String, dynamic>());
+          } else {
+            veh = Vehiculo(
+              id: (r['vehicles_fk_id'] ?? '').toString(),
+              clientsFkId: '',
+              licensePlate: (r['license_plate'] ?? query).toString(),
+              brand: r['brand']?.toString(),
+              model: r['model']?.toString(),
+              color: r['color']?.toString(),
+            );
+          }
+
+          Cliente? cli;
+          final rCliList = (rVehList is List && rVehList.isNotEmpty && rVehList.first is Map)
+              ? (rVehList.first as Map)['clients']
+              : null;
+          if (rCliList is List && rCliList.isNotEmpty) {
+            cli = Cliente.fromJson((rCliList.first as Map).cast<String, dynamic>());
+          } else {
+            cli = Cliente(
+              nombre: (r['owner_name'] ?? 'Cliente').toString(),
+              ci: (r['owner_tax_id'] ?? query).toString(),
+              telefono: (r['phone'] ?? '').toString(),
+            );
+          }
+
+          if (mounted) {
+            context.push('/portal-cliente', extra: {
+              'vehicle': veh,
+              'client': cli,
+            });
+          }
+          return;
+        }
       }
 
       // Si no hubo coincidencias

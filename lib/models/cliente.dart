@@ -21,9 +21,20 @@ class Cliente {
     this.source,
   });
 
-  factory Cliente.fromJson(Map<String, dynamic> json) => Cliente(
-    id: json['client_id']?.toString() ?? json['id']?.toString(),
-    nombre:
+  factory Cliente.fromJson(Map<String, dynamic> json) {
+    String? extractId() {
+      final id = json['id']?.toString().trim();
+      if (id != null && id.isNotEmpty) return id;
+      final cId = json['client_id']?.toString().trim();
+      if (cId != null && cId.isNotEmpty) return cId;
+      final underId = json['_id']?.toString().trim();
+      if (underId != null && underId.isNotEmpty) return underId;
+      return null;
+    }
+
+    return Cliente(
+      id: extractId(),
+      nombre:
         json['client_name']?.toString() ??
         json['name']?.toString() ??
         json['nombre']?.toString() ??
@@ -45,6 +56,7 @@ class Cliente {
     status: json['status']?.toString(),
     source: json['source']?.toString(),
   );
+  }
 
   Map<String, dynamic> toJson() => {
     if (id != null) 'client_id': id,

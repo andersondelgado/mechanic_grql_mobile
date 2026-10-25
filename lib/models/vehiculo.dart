@@ -19,19 +19,31 @@ class Vehiculo {
     this.vin,
   });
 
-  factory Vehiculo.fromJson(Map<String, dynamic> json) => Vehiculo(
-    id: json['vehicle_id']?.toString() ?? json['id']?.toString(),
-    clientsFkId: json['clients_fk_id']?.toString() ?? '',
-    clientName: json['client_name']?.toString() ??
-        ((json['clients'] != null && (json['clients'] as List).isNotEmpty)
-            ? json['clients'][0]['client_name']?.toString()
-            : null),
-    brand: json['brand']?.toString(),
-    model: json['model']?.toString(),
-    licensePlate: json['license_plate']?.toString() ?? '',
-    color: json['color']?.toString(),
-    vin: json['vin']?.toString(),
-  );
+  factory Vehiculo.fromJson(Map<String, dynamic> json) {
+    String? extractId() {
+      final id = json['id']?.toString().trim();
+      if (id != null && id.isNotEmpty) return id;
+      final vId = json['vehicle_id']?.toString().trim();
+      if (vId != null && vId.isNotEmpty) return vId;
+      final underId = json['_id']?.toString().trim();
+      if (underId != null && underId.isNotEmpty) return underId;
+      return null;
+    }
+
+    return Vehiculo(
+      id: extractId(),
+      clientsFkId: json['clients_fk_id']?.toString() ?? '',
+      clientName: json['client_name']?.toString() ??
+          ((json['clients'] != null && (json['clients'] as List).isNotEmpty)
+              ? json['clients'][0]['client_name']?.toString()
+              : null),
+      brand: json['brand']?.toString(),
+      model: json['model']?.toString(),
+      licensePlate: json['license_plate']?.toString() ?? '',
+      color: json['color']?.toString(),
+      vin: json['vin']?.toString(),
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     if (id != null) 'vehicle_id': id,

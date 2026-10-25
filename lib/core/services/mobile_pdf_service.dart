@@ -1,3 +1,4 @@
+import '../constants/logo_base64.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -8,6 +9,16 @@ import '../../models/peritaje.dart';
 import '../../models/recepcion.dart';
 
 class MobilePdfService {
+  /// Retorna la imagen del logo oficial de Taller 360 desde Base64
+  static pw.MemoryImage? _getLogoImage() {
+    try {
+      final bytes = base64Decode(kLogoTaller360Base64.replaceAll(RegExp(r'\s+'), ''));
+      return pw.MemoryImage(bytes);
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Decodifica firma base64 si existe en el modelo
   static Uint8List? _decodeSignature(String? sig) {
     if (sig == null || sig.isEmpty) return null;
@@ -77,21 +88,26 @@ class MobilePdfService {
                       crossAxisAlignment: pw.CrossAxisAlignment.center,
                       children: [
                         pw.Container(
-                          width: 44,
-                          height: 44,
+                          width: 46,
+                          height: 46,
+                          padding: const pw.EdgeInsets.all(3),
                           decoration: pw.BoxDecoration(
-                            color: PdfColors.blueGrey900,
+                            color: PdfColors.white,
                             borderRadius: pw.BorderRadius.circular(8),
+                            border: pw.Border.all(color: PdfColors.grey300, width: 1),
                           ),
-                          alignment: pw.Alignment.center,
-                          child: pw.Text(
-                            '360°',
-                            style: pw.TextStyle(
-                              color: PdfColors.white,
-                              fontSize: 16,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
+                          child: _getLogoImage() != null
+                              ? pw.Image(_getLogoImage()!, fit: pw.BoxFit.contain)
+                              : pw.Center(
+                                  child: pw.Text(
+                                    '360°',
+                                    style: pw.TextStyle(
+                                      color: PdfColors.blueGrey900,
+                                      fontSize: 16,
+                                      fontWeight: pw.FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
                         ),
                         pw.SizedBox(width: 10),
                         pw.Column(
@@ -591,17 +607,22 @@ class MobilePdfService {
                     pw.Row(
                       children: [
                         pw.Container(
-                          width: 44,
-                          height: 44,
+                          width: 46,
+                          height: 46,
+                          padding: const pw.EdgeInsets.all(3),
                           decoration: pw.BoxDecoration(
-                            color: PdfColors.blueGrey900,
+                            color: PdfColors.white,
                             borderRadius: pw.BorderRadius.circular(8),
+                            border: pw.Border.all(color: PdfColors.grey300, width: 1),
                           ),
-                          alignment: pw.Alignment.center,
-                          child: pw.Text(
-                            '360°',
-                            style: pw.TextStyle(color: PdfColors.white, fontSize: 16, fontWeight: pw.FontWeight.bold),
-                          ),
+                          child: _getLogoImage() != null
+                              ? pw.Image(_getLogoImage()!, fit: pw.BoxFit.contain)
+                              : pw.Center(
+                                  child: pw.Text(
+                                    '360°',
+                                    style: pw.TextStyle(color: PdfColors.blueGrey900, fontSize: 16, fontWeight: pw.FontWeight.bold),
+                                  ),
+                                ),
                         ),
                         pw.SizedBox(width: 10),
                         pw.Column(
@@ -723,7 +744,36 @@ class MobilePdfService {
                   ),
                 ],
               ),
-              pw.SizedBox(height: 8),
+              pw.SizedBox(height: 6),
+
+              // Custodia y Personal Responsable
+              pw.Container(
+                width: double.infinity,
+                padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 7),
+                decoration: pw.BoxDecoration(
+                  color: PdfColors.grey50,
+                  borderRadius: pw.BorderRadius.circular(6),
+                  border: pw.Border.all(color: PdfColors.grey300),
+                ),
+                child: pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text(
+                      'Recibido por: ${recepcion.receivedBy != null && recepcion.receivedBy!.isNotEmpty ? recepcion.receivedBy! : '-'}',
+                      style: const pw.TextStyle(fontSize: 7, color: PdfColors.blueGrey800),
+                    ),
+                    pw.Text(
+                      'Entregado por: ${recepcion.deliveredBy != null && recepcion.deliveredBy!.isNotEmpty ? recepcion.deliveredBy! : (recepcion.ownerName ?? 'Cliente')}',
+                      style: const pw.TextStyle(fontSize: 7, color: PdfColors.blueGrey800),
+                    ),
+                    pw.Text(
+                      'Técnico Asignado: ${recepcion.assignedTechnician != null && recepcion.assignedTechnician!.isNotEmpty ? recepcion.assignedTechnician! : 'YEISON TORRES'}',
+                      style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800),
+                    ),
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 6),
 
               // Motivo y Diagnóstico Inicial
               pw.Container(
@@ -751,7 +801,7 @@ class MobilePdfService {
                   ],
                 ),
               ),
-              pw.SizedBox(height: 8),
+              pw.SizedBox(height: 6),
 
               // Checklist Resumen
               pw.Container(
@@ -788,6 +838,22 @@ class MobilePdfService {
               ),
 
               pw.Spacer(),
+
+              // Cláusula de Custodia
+              pw.Container(
+                padding: const pw.EdgeInsets.all(4),
+                decoration: pw.BoxDecoration(
+                  color: PdfColors.grey50,
+                  borderRadius: pw.BorderRadius.circular(4),
+                  border: pw.Border.all(color: PdfColors.grey300),
+                ),
+                child: pw.Text(
+                  'CLÁUSULA DE CUSTODIA Y CONFORMIDAD: El cliente autoriza los trabajos mencionados y los desplazamientos necesarios para pruebas mecánicas bajo su cuenta y riesgo. El taller no se hace responsable por pérdidas de objetos de valor no especificados en este reporte.',
+                  style: const pw.TextStyle(fontSize: 5.5, color: PdfColors.blueGrey600),
+                  textAlign: pw.TextAlign.justify,
+                ),
+              ),
+              pw.SizedBox(height: 4),
 
               // Firmas
               pw.Container(

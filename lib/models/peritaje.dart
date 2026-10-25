@@ -97,9 +97,29 @@ class Peritaje {
       return double.tryParse(v.toString());
     }
 
+    String? extractId() {
+      final id = json['id']?.toString().trim();
+      if (id != null && id.isNotEmpty) return id;
+      final cId = json['card_id']?.toString().trim();
+      if (cId != null && cId.isNotEmpty) return cId;
+      final underId = json['_id']?.toString().trim();
+      if (underId != null && underId.isNotEmpty) return underId;
+      return null;
+    }
+
+    String extractVehicleId() {
+      final vFk = json['vehicles_fk_id']?.toString().trim();
+      if (vFk != null && vFk.isNotEmpty) return vFk;
+      if (vehicle != null && vehicle is Map) {
+        final vId = vehicle['id']?.toString().trim() ?? vehicle['vehicle_id']?.toString().trim();
+        if (vId != null && vId.isNotEmpty) return vId;
+      }
+      return '';
+    }
+
     return Peritaje(
-      id: json['card_id']?.toString() ?? json['id']?.toString(),
-      vehiclesFkId: json['vehicles_fk_id']?.toString() ?? '',
+      id: extractId(),
+      vehiclesFkId: extractVehicleId(),
       clientsFkId: json['clients_fk_id']?.toString(),
       employeesFkId: json['employees_fk_id']?.toString(),
       inspectionType: json['inspection_type']?.toString() ?? 'revisión',

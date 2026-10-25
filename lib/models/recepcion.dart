@@ -20,12 +20,18 @@ class Recepcion {
   final String? fuelLevel;
   final String? reasonForEntry;
   final String? workPerformed;
+  final String? receivedBy;
+  final String? deliveredBy;
+  final String? assignedTechnician;
+  final String? authorizedServices;
+  final String? observations;
   final String status;
   final List<Map<String, dynamic>> checklistExternal;
   final List<Map<String, dynamic>> checklistInternal;
   final List<Map<String, dynamic>> damagePoints;
   final String? clientSignature;
   final String? clientSignatureDate;
+  final String? mechanicSignature;
 
   Recepcion({
     this.id,
@@ -49,12 +55,18 @@ class Recepcion {
     this.fuelLevel = '1/2',
     this.reasonForEntry,
     this.workPerformed,
+    this.receivedBy,
+    this.deliveredBy,
+    this.assignedTechnician,
+    this.authorizedServices,
+    this.observations,
     this.status = 'pendiente',
     this.checklistExternal = const [],
     this.checklistInternal = const [],
     this.damagePoints = const [],
     this.clientSignature,
     this.clientSignatureDate,
+    this.mechanicSignature,
   });
 
   String get code {
@@ -83,10 +95,30 @@ class Recepcion {
     final rawStatus = json['status']?.toString() ??
         (json['exit_date'] != null ? 'completado' : 'en_proceso');
 
+    String? extractId() {
+      final id = json['id']?.toString().trim();
+      if (id != null && id.isNotEmpty) return id;
+      final rId = json['receipt_id']?.toString().trim();
+      if (rId != null && rId.isNotEmpty) return rId;
+      final underId = json['_id']?.toString().trim();
+      if (underId != null && underId.isNotEmpty) return underId;
+      return null;
+    }
+
+    String extractVehicleId() {
+      final vFk = json['vehicles_fk_id']?.toString().trim();
+      if (vFk != null && vFk.isNotEmpty) return vFk;
+      if (vehicle != null && vehicle is Map) {
+        final vId = vehicle['id']?.toString().trim() ?? vehicle['vehicle_id']?.toString().trim();
+        if (vId != null && vId.isNotEmpty) return vId;
+      }
+      return '';
+    }
+
     return Recepcion(
-      id: json['receipt_id']?.toString() ?? json['id']?.toString(),
+      id: extractId(),
       receiptNumber: json['receipt_number']?.toString(),
-      vehiclesFkId: json['vehicles_fk_id']?.toString() ?? '',
+      vehiclesFkId: extractVehicleId(),
       employeesFkId: json['employees_fk_id']?.toString(),
       entryDate: json['entry_date']?.toString() ?? json['created_at']?.toString(),
       exitDate: json['exit_date']?.toString(),
@@ -105,12 +137,18 @@ class Recepcion {
       fuelLevel: json['fuel_level']?.toString() ?? '1/2',
       reasonForEntry: json['reason_for_entry']?.toString(),
       workPerformed: json['work_performed']?.toString(),
+      receivedBy: json['received_by']?.toString() ?? json['receiving_technician']?.toString(),
+      deliveredBy: json['delivered_by']?.toString() ?? client?['client_name']?.toString() ?? json['owner_name']?.toString(),
+      assignedTechnician: json['assigned_technician']?.toString(),
+      authorizedServices: json['authorized_services']?.toString() ?? json['work_performed']?.toString(),
+      observations: json['observations']?.toString(),
       status: rawStatus,
       checklistExternal: parseList(json['checklist_external']),
       checklistInternal: parseList(json['checklist_internal']),
       damagePoints: parseList(json['damage_points']),
       clientSignature: json['client_signature']?.toString(),
       clientSignatureDate: json['client_signature_date']?.toString(),
+      mechanicSignature: json['mechanic_signature']?.toString(),
     );
   }
 
@@ -136,12 +174,18 @@ class Recepcion {
     String? fuelLevel,
     String? reasonForEntry,
     String? workPerformed,
+    String? receivedBy,
+    String? deliveredBy,
+    String? assignedTechnician,
+    String? authorizedServices,
+    String? observations,
     String? status,
     List<Map<String, dynamic>>? checklistExternal,
     List<Map<String, dynamic>>? checklistInternal,
     List<Map<String, dynamic>>? damagePoints,
     String? clientSignature,
     String? clientSignatureDate,
+    String? mechanicSignature,
   }) {
     return Recepcion(
       id: id ?? this.id,
@@ -165,12 +209,18 @@ class Recepcion {
       fuelLevel: fuelLevel ?? this.fuelLevel,
       reasonForEntry: reasonForEntry ?? this.reasonForEntry,
       workPerformed: workPerformed ?? this.workPerformed,
+      receivedBy: receivedBy ?? this.receivedBy,
+      deliveredBy: deliveredBy ?? this.deliveredBy,
+      assignedTechnician: assignedTechnician ?? this.assignedTechnician,
+      authorizedServices: authorizedServices ?? this.authorizedServices,
+      observations: observations ?? this.observations,
       status: status ?? this.status,
       checklistExternal: checklistExternal ?? this.checklistExternal,
       checklistInternal: checklistInternal ?? this.checklistInternal,
       damagePoints: damagePoints ?? this.damagePoints,
       clientSignature: clientSignature ?? this.clientSignature,
       clientSignatureDate: clientSignatureDate ?? this.clientSignatureDate,
+      mechanicSignature: mechanicSignature ?? this.mechanicSignature,
     );
   }
 
@@ -196,8 +246,14 @@ class Recepcion {
     if (fuelLevel != null) 'fuel_level': fuelLevel,
     if (reasonForEntry != null) 'reason_for_entry': reasonForEntry,
     if (workPerformed != null) 'work_performed': workPerformed,
+    if (receivedBy != null) 'received_by': receivedBy,
+    if (deliveredBy != null) 'delivered_by': deliveredBy,
+    if (assignedTechnician != null) 'assigned_technician': assignedTechnician,
+    if (authorizedServices != null) 'authorized_services': authorizedServices,
+    if (observations != null) 'observations': observations,
     'status': status,
     if (clientSignature != null) 'client_signature': clientSignature,
     if (clientSignatureDate != null) 'client_signature_date': clientSignatureDate,
+    if (mechanicSignature != null) 'mechanic_signature': mechanicSignature,
   };
 }

@@ -47,9 +47,41 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/portal-cliente',
         builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>? ?? {};
-          final vehicle = extra['vehicle'] as Vehiculo;
-          final client = extra['client'] as Cliente?;
+          final extra = state.extra as Map<String, dynamic>?;
+          final vehicle = extra?['vehicle'] as Vehiculo?;
+          final client = extra?['client'] as Cliente?;
+          if (vehicle == null) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('Portal del Cliente')),
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.directions_car_outlined, size: 64, color: Colors.grey),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Vehículo no encontrado',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'No se proporcionaron datos del vehículo para mostrar en el portal.',
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: () => context.go('/consulta-cliente'),
+                        icon: const Icon(Icons.search),
+                        label: const Text('Volver a Consulta'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
           return PortalClientePage(vehicle: vehicle, client: client);
         },
       ),

@@ -60,15 +60,23 @@ class LoginPage extends HookConsumerWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(16),
+                          width: 88,
+                          height: 88,
+                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.08),
+                                blurRadius: 16,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                          child: const Icon(
-                            Icons.car_repair,
-                            size: 64,
-                            color: AppColors.primary,
+                          child: Image.asset(
+                            'assets/images/logo-taller-360.png',
+                            fit: BoxFit.contain,
                           ),
                         ),
                         const SizedBox(height: 24),

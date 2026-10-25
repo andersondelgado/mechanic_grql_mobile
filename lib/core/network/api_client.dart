@@ -366,15 +366,21 @@ class ApiClient {
   }
 
   /// Obtener todos los peritajes con su análisis IA asociado para un vehículo
-  Future<List<Map<String, dynamic>>> getPeritajesForVehicle(String vehicleId) async {
+  Future<List<Map<String, dynamic>>> getPeritajesForVehicle(String vehicleId, {String? licensePlate}) async {
     final peritajes = await getEntity('GestionTallerProd_inspection_cards', query: WorkflowQuery(pagination: {'page': 1, 'size': 100}));
     final analyses = await getEntity('GestionTallerProd_inspection_analysis', query: WorkflowQuery(pagination: {'page': 1, 'size': 200}));
+    final cleanPlate = licensePlate?.trim().toUpperCase().replaceAll(' ', '').replaceAll('-', '') ?? '';
 
     final list = <Map<String, dynamic>>[];
     for (final p in peritajes) {
       if (p is! Map) continue;
       final vId = (p['vehicles_fk_id'] ?? p['vehicle_id'] ?? '').toString();
-      if (vId == vehicleId) {
+      final plate = (p['license_plate'] ?? p['plate'] ?? '').toString().trim().toUpperCase().replaceAll(' ', '').replaceAll('-', '');
+
+      final matches = (vehicleId.isNotEmpty && vId == vehicleId) ||
+          (cleanPlate.isNotEmpty && plate == cleanPlate);
+
+      if (matches) {
         final pMap = Map<String, dynamic>.from(p.cast<String, dynamic>());
         final pId = (pMap['id'] ?? pMap['card_id'] ?? '').toString();
 
@@ -395,22 +401,32 @@ class ApiClient {
   }
 
   /// Obtener todas las recepciones para un vehículo
-  Future<List<Map<String, dynamic>>> getRecepcionesForVehicle(String vehicleId) async {
+  Future<List<Map<String, dynamic>>> getRecepcionesForVehicle(String vehicleId, {String? licensePlate}) async {
     final all = await getEntity('GestionTallerProd_vehicle_receipts', query: WorkflowQuery(pagination: {'page': 1, 'size': 100}));
+    final cleanPlate = licensePlate?.trim().toUpperCase().replaceAll(' ', '').replaceAll('-', '') ?? '';
+
     return all.where((r) {
       if (r is! Map) return false;
       final vId = (r['vehicles_fk_id'] ?? r['vehicle_id'] ?? '').toString();
-      return vId == vehicleId;
+      final plate = (r['license_plate'] ?? r['plate'] ?? '').toString().trim().toUpperCase().replaceAll(' ', '').replaceAll('-', '');
+
+      return (vehicleId.isNotEmpty && vId == vehicleId) ||
+          (cleanPlate.isNotEmpty && plate == cleanPlate);
     }).map((e) => (e as Map).cast<String, dynamic>()).toList();
   }
 
   /// Obtener todas las cotizaciones/presupuestos para un vehículo
-  Future<List<Map<String, dynamic>>> getQuotesForVehicle(String vehicleId) async {
+  Future<List<Map<String, dynamic>>> getQuotesForVehicle(String vehicleId, {String? licensePlate}) async {
     final all = await getEntity('GestionTallerProd_quotes', query: WorkflowQuery(pagination: {'page': 1, 'size': 100}));
+    final cleanPlate = licensePlate?.trim().toUpperCase().replaceAll(' ', '').replaceAll('-', '') ?? '';
+
     return all.where((q) {
       if (q is! Map) return false;
       final vId = (q['vehicles_fk_id'] ?? q['vehicle_id'] ?? '').toString();
-      return vId == vehicleId;
+      final plate = (q['license_plate'] ?? q['plate'] ?? '').toString().trim().toUpperCase().replaceAll(' ', '').replaceAll('-', '');
+
+      return (vehicleId.isNotEmpty && vId == vehicleId) ||
+          (cleanPlate.isNotEmpty && plate == cleanPlate);
     }).map((e) => (e as Map).cast<String, dynamic>()).toList();
   }
 

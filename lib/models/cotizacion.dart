@@ -55,12 +55,34 @@ class Cotizacion {
       return [];
     }
 
+    String? extractId() {
+      final id = json['id']?.toString().trim();
+      if (id != null && id.isNotEmpty) return id;
+      final qId = json['quote_id']?.toString().trim();
+      if (qId != null && qId.isNotEmpty) return qId;
+      final underId = json['_id']?.toString().trim();
+      if (underId != null && underId.isNotEmpty) return underId;
+      return null;
+    }
+
+    String? extractVehicleId() {
+      final vFk = json['vehicles_fk_id']?.toString().trim();
+      if (vFk != null && vFk.isNotEmpty) return vFk;
+      if (vehicle != null && vehicle is Map) {
+        final vId = vehicle['id']?.toString().trim() ?? vehicle['vehicle_id']?.toString().trim();
+        if (vId != null && vId.isNotEmpty) return vId;
+      }
+      return null;
+    }
+
+    final realId = extractId();
+
     return Cotizacion(
-      id: json['id']?.toString() ?? json['quote_id']?.toString(),
+      id: realId,
       quoteNumber: json['quote_number']?.toString() ??
-          (json['id'] != null ? 'COT-${json['id'].toString().substring(0, 6).toUpperCase()}' : 'COT-001'),
+          (realId != null ? 'COT-${realId.substring(0, realId.length >= 6 ? 6 : realId.length).toUpperCase()}' : 'COT-001'),
       clientsFkId: json['clients_fk_id']?.toString(),
-      vehiclesFkId: json['vehicles_fk_id']?.toString(),
+      vehiclesFkId: extractVehicleId(),
       clientName: clientName?.toString(),
       licensePlate: plate?.toString(),
       quoteDate: json['quote_date']?.toString() ?? json['created_at']?.toString(),

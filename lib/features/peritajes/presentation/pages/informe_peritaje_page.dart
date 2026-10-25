@@ -404,18 +404,22 @@ class _InformePeritajePageState extends ConsumerState<InformePeritajePage> {
           Container(
             width: 48,
             height: 48,
+            padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: const Color(0xFF0F172A),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            alignment: Alignment.center,
-            child: const Text(
-              '360°',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w900,
-              ),
+            child: Image.asset(
+              'assets/images/logo-taller-360.png',
+              fit: BoxFit.contain,
             ),
           ),
           const SizedBox(width: 12),

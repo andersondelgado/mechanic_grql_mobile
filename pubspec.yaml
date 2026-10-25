@@ -48,3 +48,18 @@ flutter:
 
 dependency_overrides:
   archive: ^4.5.2
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+    background_color: "#0a101d"
+    theme_color: "#0ea5e4"
+  windows:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+    icon_size: 48

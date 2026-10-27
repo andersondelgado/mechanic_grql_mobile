@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../providers/facturas_provider.dart';
+import '../providers/currency_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 class FacturasPage extends HookConsumerWidget {
@@ -10,6 +12,7 @@ class FacturasPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final facturasState = ref.watch(facturasProvider);
+    final currencyState = ref.watch(currencyProvider);
     final user = ref.watch(authProvider).user;
     final isAdmin = user?.role == 'admin';
 
@@ -26,6 +29,11 @@ class FacturasPage extends HookConsumerWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.payments_outlined, color: AppColors.primary),
+            tooltip: 'Métodos de Pago',
+            onPressed: () => context.go('/metodos-pago'),
+          ),
           if (isAdmin)
             IconButton(
               icon: const Icon(Icons.add_circle, color: AppColors.primary),
@@ -94,15 +102,30 @@ class FacturasPage extends HookConsumerWidget {
                           ),
                       ],
                     ),
-                    trailing: Text(
-                      factura.total != null
-                          ? '\$${factura.total!.toStringAsFixed(2)}'
-                          : 'N/A',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                        fontSize: 16,
-                      ),
+                    trailing: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          factura.total != null
+                              ? ref.read(currencyProvider.notifier).formatAmount(factura.total!)
+                              : 'N/A',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                            fontSize: 15,
+                          ),
+                        ),
+                        if (factura.total != null && currencyState.activeCurrency.code != 'USD')
+                          Text(
+                            '\$${factura.total!.toStringAsFixed(2)} USD',
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                      ],
                     ),
                     isThreeLine: isAdmin && factura.clientName != null,
                   ),

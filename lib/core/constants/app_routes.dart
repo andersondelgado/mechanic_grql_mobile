@@ -13,6 +13,7 @@ import '../../features/peritajes/presentation/pages/camera_page.dart';
 import '../../features/recepciones/presentation/pages/recepcion_form_page.dart';
 import '../../features/inventario/presentation/pages/inventario_page.dart';
 import '../../features/finanzas/presentation/pages/facturas_page.dart';
+import '../../features/finanzas/presentation/pages/metodos_pago_page.dart';
 import '../../features/cliente_portal/presentation/pages/consulta_cliente_page.dart';
 import '../../features/cliente_portal/presentation/pages/portal_cliente_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
@@ -141,6 +142,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/facturas',
             builder: (context, state) => const FacturasPage(),
+          ),
+          GoRoute(
+            path: '/metodos-pago',
+            builder: (context, state) => const MetodosPagoPage(),
           ),
         ],
       ),

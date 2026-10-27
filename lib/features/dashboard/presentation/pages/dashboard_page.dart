@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/dashboard_provider.dart';
 import '../../../vehiculos/presentation/providers/vehiculos_provider.dart';
 import '../../../recepciones/presentation/providers/recepciones_provider.dart';
 import '../../../finanzas/presentation/providers/facturas_provider.dart';
+import '../../../finanzas/presentation/providers/currency_provider.dart';
 
 class DashboardPage extends HookConsumerWidget {
   const DashboardPage({super.key});
@@ -20,6 +22,7 @@ class DashboardPage extends HookConsumerWidget {
     final myVehicles = ref.watch(vehiculosProvider);
     final myReceptions = ref.watch(recepcionesProvider);
     final myFacturas = ref.watch(facturasProvider);
+    final currencyState = ref.watch(currencyProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -125,6 +128,78 @@ class DashboardPage extends HookConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Banner de Multimoneda y Métodos de Pago
+                    InkWell(
+                      onTap: () => context.go('/metodos-pago'),
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        margin: const EdgeInsets.only(bottom: 20),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.payments_outlined,
+                                  color: Colors.cyanAccent, size: 22),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Text(
+                                        'Métodos de Pago & Monedas',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(currencyState.activeCurrency.flag),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Zelle, Pago Móvil, Divisa, USDT • Ref: 1 USD = ${currencyState.activeCurrency.rate} ${currencyState.activeCurrency.symbol}',
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 11,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.arrow_forward_ios,
+                                color: Colors.white54, size: 14),
+                          ],
+                        ),
+                      ),
+                    ),
+
                     const Text(
                       'Resumen General',
                       style: TextStyle(
